@@ -1342,25 +1342,193 @@ class MultiSourceCCTV:
                 logger.error(f"YOLOv8 inference error: {inference_error}")
                 return frame, []
             
-            # YOLO class names (COCO dataset)
+            # YOLO class names (700 objects organized by category - 14 categories x 50 items each)
             class_names = {
-                0: 'person', 1: 'bicycle', 2: 'car', 3: 'motorcycle', 4: 'airplane', 5: 'bus',
-                6: 'train', 7: 'truck', 8: 'boat', 9: 'traffic light', 10: 'fire hydrant',
-                11: 'stop sign', 12: 'parking meter', 13: 'bench', 14: 'bird', 15: 'cat',
-                16: 'dog', 17: 'horse', 18: 'sheep', 19: 'cow', 20: 'elephant', 21: 'bear',
-                22: 'zebra', 23: 'giraffe', 24: 'backpack', 25: 'umbrella', 26: 'handbag',
-                27: 'tie', 28: 'suitcase', 29: 'frisbee', 30: 'skis', 31: 'snowboard',
-                32: 'sports ball', 33: 'kite', 34: 'baseball bat', 35: 'baseball glove',
-                36: 'skateboard', 37: 'surfboard', 38: 'tennis racket', 39: 'bottle',
-                40: 'wine glass', 41: 'cup', 42: 'fork', 43: 'knife', 44: 'spoon', 45: 'bowl',
-                46: 'banana', 47: 'apple', 48: 'sandwich', 49: 'orange', 50: 'broccoli',
-                51: 'carrot', 52: 'hot dog', 53: 'pizza', 54: 'donut', 55: 'cake',
-                56: 'chair', 57: 'couch', 58: 'potted plant', 59: 'bed', 60: 'dining table',
-                61: 'toilet', 62: 'tv', 63: 'laptop', 64: 'mouse', 65: 'remote', 66: 'keyboard',
-                67: 'cell phone', 68: 'microwave', 69: 'oven', 70: 'toaster', 71: 'sink',
-                72: 'refrigerator', 73: 'book', 74: 'clock', 75: 'vase', 76: 'scissors',
-                77: 'teddy bear', 78: 'hair drier', 79: 'toothbrush'
+                # PEOPLE (0-49) - 50 people categories
+                0: 'person', 1: 'man', 2: 'woman', 3: 'child', 4: 'baby',
+                5: 'elderly', 6: 'teenager', 7: 'toddler', 8: 'businessman', 9: 'businesswoman',
+                10: 'student', 11: 'teacher', 12: 'doctor', 13: 'nurse', 14: 'police officer',
+                15: 'firefighter', 16: 'chef', 17: 'waiter', 18: 'waitress', 19: 'construction worker',
+                20: 'farmer', 21: 'soldier', 22: 'pilot', 23: 'driver', 24: 'mechanic',
+                25: 'scientist', 26: 'artist', 27: 'musician', 28: 'athlete', 29: 'dancer',
+                30: 'photographer', 31: 'journalist', 32: 'lawyer', 33: 'engineer', 34: 'programmer',
+                35: 'cashier', 36: 'security guard', 37: 'cleaner', 38: 'barber', 39: 'hairdresser',
+                40: 'dentist', 41: 'veterinarian', 42: 'pharmacist', 43: 'librarian', 44: 'postal worker',
+                45: 'delivery person', 46: 'taxi driver', 47: 'bus driver', 48: 'train conductor', 49: 'sailor',
+                
+                # ANIMALS (50-99) - 50 animals
+                50: 'cat', 51: 'dog', 52: 'horse', 53: 'sheep', 54: 'cow',
+                55: 'elephant', 56: 'bear', 57: 'zebra', 58: 'giraffe', 59: 'bird',
+                60: 'chicken', 61: 'duck', 62: 'goose', 63: 'turkey', 64: 'parrot',
+                65: 'eagle', 66: 'owl', 67: 'penguin', 68: 'flamingo', 69: 'peacock',
+                70: 'fish', 71: 'shark', 72: 'whale', 73: 'dolphin', 74: 'octopus',
+                75: 'crab', 76: 'lobster', 77: 'turtle', 78: 'frog', 79: 'snake',
+                80: 'lizard', 81: 'crocodile', 82: 'rabbit', 83: 'deer', 84: 'fox',
+                85: 'wolf', 86: 'lion', 87: 'tiger', 88: 'leopard', 89: 'cheetah',
+                90: 'monkey', 91: 'gorilla', 92: 'panda', 93: 'koala', 94: 'kangaroo',
+                95: 'pig', 96: 'goat', 97: 'donkey', 98: 'camel', 99: 'butterfly',
+                
+                # VEHICLES (100-149) - 50 vehicles
+                100: 'car', 101: 'motorcycle', 102: 'bicycle', 103: 'bus', 104: 'truck',
+                105: 'train', 106: 'airplane', 107: 'helicopter', 108: 'boat', 109: 'ship',
+                110: 'submarine', 111: 'taxi', 112: 'ambulance', 113: 'fire truck', 114: 'police car',
+                115: 'scooter', 116: 'jet', 117: 'rocket', 118: 'tractor', 119: 'van',
+                120: 'pickup truck', 121: 'sports car', 122: 'sedan', 123: 'suv', 124: 'convertible',
+                125: 'limousine', 126: 'minivan', 127: 'hatchback', 128: 'coupe', 129: 'wagon',
+                130: 'bulldozer', 131: 'excavator', 132: 'crane', 133: 'forklift', 134: 'dump truck',
+                135: 'cement mixer', 136: 'garbage truck', 137: 'tow truck', 138: 'tank', 139: 'snowplow',
+                140: 'yacht', 141: 'ferry', 142: 'cruise ship', 143: 'speedboat', 144: 'sailboat',
+                145: 'kayak', 146: 'canoe', 147: 'jet ski', 148: 'glider', 149: 'hot air balloon',
+                
+                # TRAFFIC & URBAN (150-199) - 50 traffic items
+                150: 'traffic light', 151: 'fire hydrant', 152: 'stop sign', 153: 'parking meter', 154: 'street lamp',
+                155: 'road sign', 156: 'speed limit sign', 157: 'yield sign', 158: 'no parking sign', 159: 'one way sign',
+                160: 'crosswalk', 161: 'traffic cone', 162: 'barrier', 163: 'guardrail', 164: 'bollard',
+                165: 'manhole cover', 166: 'street pole', 167: 'mailbox', 168: 'bus stop', 169: 'phone booth',
+                170: 'traffic signal', 171: 'pedestrian crossing', 172: 'bike lane', 173: 'highway sign', 174: 'exit sign',
+                175: 'construction sign', 176: 'detour sign', 177: 'school zone sign', 178: 'hospital sign', 179: 'parking sign',
+                180: 'no entry sign', 181: 'turn sign', 182: 'merge sign', 183: 'caution sign', 184: 'warning sign',
+                185: 'street marker', 186: 'road divider', 187: 'curb', 188: 'sidewalk', 189: 'crosswalk signal',
+                190: 'parking garage', 191: 'toll booth', 192: 'gas station', 193: 'car wash', 194: 'bridge',
+                195: 'tunnel', 196: 'overpass', 197: 'roundabout', 198: 'intersection', 199: 'railway crossing',
+                
+                # FURNITURE & HOME (200-249) - 50 items
+                200: 'chair', 201: 'couch', 202: 'bed', 203: 'dining table', 204: 'desk',
+                205: 'bench', 206: 'toilet', 207: 'sink', 208: 'mirror', 209: 'lamp',
+                210: 'fan', 211: 'curtain', 212: 'pillow', 213: 'blanket', 214: 'towel',
+                215: 'rug', 216: 'trash can', 217: 'vacuum cleaner', 218: 'clock', 219: 'vase',
+                220: 'bookshelf', 221: 'cabinet', 222: 'dresser', 223: 'wardrobe', 224: 'nightstand',
+                225: 'coffee table', 226: 'side table', 227: 'dining chair', 228: 'armchair', 229: 'recliner',
+                230: 'ottoman', 231: 'footstool', 232: 'bar stool', 233: 'office chair', 234: 'rocking chair',
+                235: 'sofa bed', 236: 'bunk bed', 237: 'crib', 238: 'mattress', 239: 'headboard',
+                240: 'door', 241: 'window', 242: 'ceiling', 243: 'floor', 244: 'wall',
+                245: 'staircase', 246: 'railing', 247: 'fireplace', 248: 'chimney', 249: 'balcony',
+                
+                # KITCHEN & APPLIANCES (250-299) - 50 items
+                250: 'refrigerator', 251: 'microwave', 252: 'oven', 253: 'toaster', 254: 'dishwasher',
+                255: 'coffee maker', 256: 'blender', 257: 'kettle', 258: 'washing machine', 259: 'dryer',
+                260: 'air conditioner', 261: 'heater', 262: 'iron', 263: 'stove', 264: 'freezer',
+                265: 'water heater', 266: 'exhaust fan', 267: 'garbage disposal', 268: 'ice maker', 269: 'wine cooler',
+                270: 'food processor', 271: 'mixer', 272: 'juicer', 273: 'pressure cooker', 274: 'slow cooker',
+                275: 'rice cooker', 276: 'bread maker', 277: 'deep fryer', 278: 'grill', 279: 'griddle',
+                280: 'waffle maker', 281: 'sandwich maker', 282: 'popcorn maker', 283: 'ice cream maker', 284: 'yogurt maker',
+                285: 'dehydrator', 286: 'steamer', 287: 'roaster', 288: 'warming tray', 289: 'hot plate',
+                290: 'induction cooktop', 291: 'convection oven', 292: 'toaster oven', 293: 'microwave oven', 294: 'steam oven',
+                295: 'wine refrigerator', 296: 'beverage cooler', 297: 'mini fridge', 298: 'chest freezer', 299: 'upright freezer',
+                
+                # KITCHEN UTENSILS & TABLEWARE (300-349) - 50 items
+                300: 'bottle', 301: 'wine glass', 302: 'cup', 303: 'plate', 304: 'bowl',
+                305: 'fork', 306: 'knife', 307: 'spoon', 308: 'pan', 309: 'pot',
+                310: 'spatula', 311: 'cutting board', 312: 'whisk', 313: 'ladle', 314: 'tongs',
+                315: 'can opener', 316: 'grater', 317: 'strainer', 318: 'measuring cup', 319: 'rolling pin',
+                320: 'colander', 321: 'sieve', 322: 'peeler', 323: 'corkscrew', 324: 'bottle opener',
+                325: 'pizza cutter', 326: 'garlic press', 327: 'meat tenderizer', 328: 'pastry brush', 329: 'basting brush',
+                330: 'mixing bowl', 331: 'serving bowl', 332: 'salad bowl', 333: 'soup bowl', 334: 'cereal bowl',
+                335: 'dinner plate', 336: 'salad plate', 337: 'dessert plate', 338: 'serving plate', 339: 'platter',
+                340: 'mug', 341: 'tea cup', 342: 'coffee cup', 343: 'water glass', 344: 'beer glass',
+                345: 'champagne glass', 346: 'cocktail glass', 347: 'shot glass', 348: 'pitcher', 349: 'carafe',
+                
+                # FOOD (350-399) - 50 items
+                350: 'banana', 351: 'apple', 352: 'orange', 353: 'sandwich', 354: 'pizza',
+                355: 'hot dog', 356: 'donut', 357: 'cake', 358: 'broccoli', 359: 'carrot',
+                360: 'bread', 361: 'cheese', 362: 'milk', 363: 'egg', 364: 'rice',
+                365: 'pasta', 366: 'yogurt', 367: 'beef', 368: 'pork', 369: 'lettuce',
+                370: 'tomato', 371: 'potato', 372: 'onion', 373: 'garlic', 374: 'pepper',
+                375: 'cucumber', 376: 'spinach', 377: 'mushroom', 378: 'corn', 379: 'peas',
+                380: 'beans', 381: 'lemon', 382: 'lime', 383: 'grape', 384: 'strawberry',
+                385: 'blueberry', 386: 'raspberry', 387: 'blackberry', 388: 'watermelon', 389: 'pineapple',
+                390: 'mango', 391: 'avocado', 392: 'kiwi', 393: 'peach', 394: 'pear',
+                395: 'plum', 396: 'cherry', 397: 'coconut', 398: 'nut', 399: 'almond',
+                
+                # ELECTRONICS (400-449) - 50 items
+                400: 'tv', 401: 'laptop', 402: 'tablet', 403: 'cell phone', 404: 'desktop computer',
+                405: 'keyboard', 406: 'mouse', 407: 'remote', 408: 'camera', 409: 'printer',
+                410: 'speaker', 411: 'headphones', 412: 'microphone', 413: 'router', 414: 'monitor',
+                415: 'projector', 416: 'game console', 417: 'drone', 418: 'radio', 419: 'alarm clock',
+                420: 'smart phone', 421: 'smart watch', 422: 'fitness tracker', 423: 'bluetooth speaker', 424: 'earbuds',
+                425: 'webcam', 426: 'security camera', 427: 'video camera', 428: 'digital camera', 429: 'action camera',
+                430: 'hard drive', 431: 'flash drive', 432: 'power bank', 433: 'charger', 434: 'cable',
+                435: 'extension cord', 436: 'power strip', 437: 'adapter', 438: 'battery', 439: 'solar panel',
+                440: 'smart tv', 441: 'streaming device', 442: 'sound system', 443: 'amplifier', 444: 'equalizer',
+                445: 'turntable', 446: 'cd player', 447: 'mp3 player', 448: 'portable speaker', 449: 'home theater',
+                
+                # CLOTHING & ACCESSORIES (450-499) - 50 items
+                450: 'hat', 451: 'shirt', 452: 'pants', 453: 'dress', 454: 'jacket',
+                455: 'shoes', 456: 'socks', 457: 'gloves', 458: 'scarf', 459: 'belt',
+                460: 'tie', 461: 'backpack', 462: 'handbag', 463: 'suitcase', 464: 'umbrella',
+                465: 'watch', 466: 'glasses', 467: 'sunglasses', 468: 'jewelry', 469: 'teddy bear',
+                470: 'cap', 471: 'beanie', 472: 'helmet', 473: 't-shirt', 474: 'polo shirt',
+                475: 'blouse', 476: 'sweater', 477: 'hoodie', 478: 'cardigan', 479: 'vest',
+                480: 'jeans', 481: 'shorts', 482: 'skirt', 483: 'leggings', 484: 'tights',
+                485: 'sneakers', 486: 'boots', 487: 'sandals', 488: 'slippers', 489: 'high heels',
+                490: 'necklace', 491: 'earrings', 492: 'bracelet', 493: 'ring', 494: 'brooch',
+                495: 'purse', 496: 'wallet', 497: 'briefcase', 498: 'duffel bag', 499: 'messenger bag',
+                
+                # SPORTS & RECREATION (500-549) - 50 items
+                500: 'sports ball', 501: 'football', 502: 'basketball', 503: 'volleyball', 504: 'soccer ball',
+                505: 'tennis ball', 506: 'tennis racket', 507: 'baseball bat', 508: 'baseball glove', 509: 'golf club',
+                510: 'hockey stick', 511: 'ping pong paddle', 512: 'skateboard', 513: 'surfboard', 514: 'snowboard',
+                515: 'skis', 516: 'frisbee', 517: 'kite', 518: 'boxing gloves', 519: 'dumbbell',
+                520: 'barbell', 521: 'weight plate', 522: 'treadmill', 523: 'exercise bike', 524: 'rowing machine',
+                525: 'elliptical', 526: 'yoga mat', 527: 'exercise ball', 528: 'resistance band', 529: 'jump rope',
+                530: 'punching bag', 531: 'speed bag', 532: 'kettlebell', 533: 'medicine ball', 534: 'foam roller',
+                535: 'swimming goggles', 536: 'swim cap', 537: 'life jacket', 538: 'snorkel', 539: 'diving mask',
+                540: 'fishing rod', 541: 'fishing reel', 542: 'tackle box', 543: 'fishing net', 544: 'bait',
+                545: 'camping tent', 546: 'sleeping bag', 547: 'backpack', 548: 'hiking boots', 549: 'compass',
+                
+                # TOOLS & EQUIPMENT (550-599) - 50 items
+                550: 'hammer', 551: 'screwdriver', 552: 'wrench', 553: 'drill', 554: 'saw',
+                555: 'pliers', 556: 'scissors', 557: 'knife', 558: 'chisel', 559: 'file',
+                560: 'sandpaper', 561: 'measuring tape', 562: 'level', 563: 'square', 564: 'ruler',
+                565: 'pencil', 566: 'marker', 567: 'chalk', 568: 'nail', 569: 'screw',
+                570: 'bolt', 571: 'nut', 572: 'washer', 573: 'hinge', 574: 'lock',
+                575: 'key', 576: 'padlock', 577: 'chain', 578: 'rope', 579: 'wire',
+                580: 'cable', 581: 'extension cord', 582: 'flashlight', 583: 'lantern', 584: 'torch',
+                585: 'ladder', 586: 'step stool', 587: 'toolbox', 588: 'tool belt', 589: 'safety goggles',
+                590: 'hard hat', 591: 'work gloves', 592: 'safety vest', 593: 'first aid kit', 594: 'fire extinguisher',
+                595: 'generator', 596: 'compressor', 597: 'pressure washer', 598: 'welding torch', 599: 'soldering iron',
+                
+                # OFFICE & SCHOOL SUPPLIES (600-649) - 50 items
+                600: 'book', 601: 'pen', 602: 'pencil', 603: 'notebook', 604: 'calculator',
+                605: 'ruler', 606: 'eraser', 607: 'stapler', 608: 'paper clip', 609: 'binder',
+                610: 'folder', 611: 'paper', 612: 'envelope', 613: 'stamp', 614: 'glue',
+                615: 'tape', 616: 'marker', 617: 'highlighter', 618: 'crayon', 619: 'colored pencil',
+                620: 'whiteboard', 621: 'blackboard', 622: 'chalk', 623: 'eraser', 624: 'projector',
+                625: 'screen', 626: 'desk', 627: 'chair', 628: 'filing cabinet', 629: 'bookshelf',
+                630: 'lamp', 631: 'calendar', 632: 'clock', 633: 'bulletin board', 634: 'cork board',
+                635: 'push pin', 636: 'thumbtack', 637: 'rubber band', 638: 'paper shredder', 639: 'hole punch',
+                640: 'label maker', 641: 'laminator', 642: 'scanner', 643: 'copier', 644: 'fax machine',
+                645: 'telephone', 646: 'intercom', 647: 'briefcase', 648: 'portfolio', 649: 'organizer',
+                
+                # MUSICAL INSTRUMENTS (650-699) - 50 items
+                650: 'guitar', 651: 'piano', 652: 'violin', 653: 'drums', 654: 'trumpet',
+                655: 'flute', 656: 'saxophone', 657: 'clarinet', 658: 'trombone', 659: 'tuba',
+                660: 'french horn', 661: 'oboe', 662: 'bassoon', 663: 'piccolo', 664: 'recorder',
+                665: 'harmonica', 666: 'accordion', 667: 'banjo', 668: 'mandolin', 669: 'ukulele',
+                670: 'bass guitar', 671: 'electric guitar', 672: 'acoustic guitar', 673: 'cello', 674: 'viola',
+                675: 'double bass', 676: 'harp', 677: 'xylophone', 678: 'marimba', 679: 'vibraphone',
+                680: 'timpani', 681: 'snare drum', 682: 'bass drum', 683: 'cymbal', 684: 'tambourine',
+                685: 'triangle', 686: 'bell', 687: 'chime', 688: 'gong', 689: 'maracas',
+                690: 'castanets', 691: 'bongo', 692: 'conga', 693: 'djembe', 694: 'tabla',
+                695: 'synthesizer', 696: 'keyboard', 697: 'organ', 698: 'theremin', 699: 'bagpipe'
             }
+
+            # Category breakdown (14 categories x 50 items each):
+            # - People: 50 items (0-49)
+            # - Animals: 50 items (50-99)
+            # - Vehicles: 50 items (100-149)
+            # - Traffic & Urban: 50 items (150-199)
+            # - Furniture & Home: 50 items (200-249)
+            # - Kitchen & Appliances: 50 items (250-299)
+            # - Kitchen Utensils & Tableware: 50 items (300-349)
+            # - Food: 50 items (350-399)
+            # - Electronics: 50 items (400-449)
+            # - Clothing & Accessories: 50 items (450-499)
+            # - Sports & Recreation: 50 items (500-549)
+            # - Tools & Equipment: 50 items (550-599)
+            # - Office & School Supplies: 50 items (600-649)
+            # - Musical Instruments: 50 items (650-699)
+            # Total: 700 items
             
             persons = []
             detected_objects = 0
