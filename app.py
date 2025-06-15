@@ -4,6 +4,7 @@ Enhanced Multi-Source CCTV System Backend with Ultra Low-Latency Streaming
 Fixed YOLOv8 Import Timeout Issue and Optimized Performance
 Supports: RTSP/ONVIF, Webcams, Live Streams, Files - All with YOLOv8 AI Detection
 Enhanced with Live Stream Original Timing Preservation & Fixed File Timing
+Added Toggleable Detection Overlay Feature
 Requires: opencv-python, flask, flask-socketio, onvif-zeep, numpy, ultralytics, yt-dlp
 """
 
@@ -202,6 +203,9 @@ class MultiSourceCCTV:
         self.detection_frame = None
         self.detection_results = []
         self.detection_lock = threading.Lock()
+        
+        # DETECTION OVERLAY SETTINGS
+        self.show_detection_overlay = True  # Flag untuk show/hide bounding boxes
         
         # Threading optimizations
         self.thread_pool = ThreadPoolExecutor(max_workers=3, thread_name_prefix="CCTV")
@@ -1391,43 +1395,45 @@ class MultiSourceCCTV:
                             # Get class name
                             class_name = class_names.get(cls, f'class_{cls}')
                             
-                            logger.debug(f"✅ Drawing {class_name} at ({x1},{y1},{x2},{y2}) conf={conf:.2f}")
+                            logger.debug(f"✅ Processing {class_name} at ({x1},{y1},{x2},{y2}) conf={conf:.2f}")
                             
-                            # Draw golden bounding box dengan thickness yang lebih tebal
-                            cv2.rectangle(frame, (x1, y1), (x2, y2), golden_color, 3)
+                            # HANYA GAMBAR BOUNDING BOXES JIKA show_detection_overlay = True
+                            if self.show_detection_overlay:
+                                # Draw golden bounding box dengan thickness yang lebih tebal
+                                cv2.rectangle(frame, (x1, y1), (x2, y2), golden_color, 3)
+                                
+                                # Prepare label text
+                                label = f"{class_name} {conf:.2f}"
+                                
+                                # Get text size untuk background
+                                font = cv2.FONT_HERSHEY_SIMPLEX
+                                font_scale = 0.7
+                                font_thickness = 2
+                                (text_width, text_height), baseline = cv2.getTextSize(label, font, font_scale, font_thickness)
+                                
+                                # Draw background rectangle untuk text (emas gelap)
+                                text_bg_x1 = x1
+                                text_bg_y1 = y1 - text_height - baseline - 10
+                                text_bg_x2 = x1 + text_width + 10
+                                text_bg_y2 = y1
+                                
+                                # Pastikan background text tidak keluar dari frame
+                                if text_bg_y1 < 0:
+                                    text_bg_y1 = y2
+                                    text_bg_y2 = y2 + text_height + baseline + 10
+                                
+                                # Draw background rectangle
+                                cv2.rectangle(frame, (text_bg_x1, text_bg_y1), (text_bg_x2, text_bg_y2), text_background_color, -1)
+                                
+                                # Draw border untuk background text
+                                cv2.rectangle(frame, (text_bg_x1, text_bg_y1), (text_bg_x2, text_bg_y2), golden_color, 2)
+                                
+                                # Draw text label (putih untuk kontras dengan background emas)
+                                text_x = x1 + 5
+                                text_y = text_bg_y1 + text_height + 5 if text_bg_y1 >= 0 else text_bg_y2 - 5
+                                cv2.putText(frame, label, (text_x, text_y), font, font_scale, (255, 255, 255), font_thickness)
                             
-                            # Prepare label text
-                            label = f"{class_name} {conf:.2f}"
-                            
-                            # Get text size untuk background
-                            font = cv2.FONT_HERSHEY_SIMPLEX
-                            font_scale = 0.7
-                            font_thickness = 2
-                            (text_width, text_height), baseline = cv2.getTextSize(label, font, font_scale, font_thickness)
-                            
-                            # Draw background rectangle untuk text (emas gelap)
-                            text_bg_x1 = x1
-                            text_bg_y1 = y1 - text_height - baseline - 10
-                            text_bg_x2 = x1 + text_width + 10
-                            text_bg_y2 = y1
-                            
-                            # Pastikan background text tidak keluar dari frame
-                            if text_bg_y1 < 0:
-                                text_bg_y1 = y2
-                                text_bg_y2 = y2 + text_height + baseline + 10
-                            
-                            # Draw background rectangle
-                            cv2.rectangle(frame, (text_bg_x1, text_bg_y1), (text_bg_x2, text_bg_y2), text_background_color, -1)
-                            
-                            # Draw border untuk background text
-                            cv2.rectangle(frame, (text_bg_x1, text_bg_y1), (text_bg_x2, text_bg_y2), golden_color, 2)
-                            
-                            # Draw text label (putih untuk kontras dengan background emas)
-                            text_x = x1 + 5
-                            text_y = text_bg_y1 + text_height + 5 if text_bg_y1 >= 0 else text_bg_y2 - 5
-                            cv2.putText(frame, label, (text_x, text_y), font, font_scale, (255, 255, 255), font_thickness)
-                            
-                            # Jika ini person, tambahkan ke tracking
+                            # Jika ini person, tambahkan ke tracking (tracking tetap bekerja meski overlay hidden)
                             if cls == 0:  # person class
                                 center_x = (x1 + x2) // 2
                                 center_y = (y1 + y2) // 2
@@ -1445,7 +1451,7 @@ class MultiSourceCCTV:
             
             # Update person count untuk tracking (hanya person)
             self.person_count = len(persons)
-            logger.debug(f"📊 Detection summary: {detected_objects} objects, {len(persons)} persons")
+            logger.debug(f"📊 Detection summary: {detected_objects} objects, {len(persons)} persons, Overlay: {'ON' if self.show_detection_overlay else 'OFF'}")
             
             return frame, persons
             
@@ -1494,44 +1500,48 @@ class MultiSourceCCTV:
                     
                     aspect_ratio = h / w if w > 0 else 0
                     if 1.2 <= aspect_ratio <= 4.0:
-                        # Draw golden bounding box
-                        cv2.rectangle(frame, (x, y), (x + w, y + h), golden_color, 3)
+                        # HANYA GAMBAR BOUNDING BOXES JIKA show_detection_overlay = True
+                        if self.show_detection_overlay:
+                            # Draw golden bounding box
+                            cv2.rectangle(frame, (x, y), (x + w, y + h), golden_color, 3)
+                            
+                            # Prepare label text
+                            label = f"Motion Detected"
+                            
+                            # Get text size untuk background
+                            font = cv2.FONT_HERSHEY_SIMPLEX
+                            font_scale = 0.7
+                            font_thickness = 2
+                            (text_width, text_height), baseline = cv2.getTextSize(label, font, font_scale, font_thickness)
+                            
+                            # Draw background rectangle untuk text (emas gelap)
+                            text_bg_x1 = x
+                            text_bg_y1 = y - text_height - baseline - 10
+                            text_bg_x2 = x + text_width + 10
+                            text_bg_y2 = y
+                            
+                            # Pastikan background text tidak keluar dari frame
+                            if text_bg_y1 < 0:
+                                text_bg_y1 = y + h
+                                text_bg_y2 = y + h + text_height + baseline + 10
+                            
+                            # Draw background rectangle
+                            cv2.rectangle(frame, (text_bg_x1, text_bg_y1), (text_bg_x2, text_bg_y2), text_background_color, -1)
+                            
+                            # Draw border untuk background text
+                            cv2.rectangle(frame, (text_bg_x1, text_bg_y1), (text_bg_x2, text_bg_y2), golden_color, 2)
+                            
+                            # Draw text label (putih untuk kontras dengan background emas)
+                            text_x = x + 5
+                            text_y = text_bg_y1 + text_height + 5 if text_bg_y1 >= 0 else text_bg_y2 - 5
+                            cv2.putText(frame, label, (text_x, text_y), font, font_scale, (255, 255, 255), font_thickness)
                         
-                        # Prepare label text
-                        label = f"Motion Detected"
-                        
-                        # Get text size untuk background
-                        font = cv2.FONT_HERSHEY_SIMPLEX
-                        font_scale = 0.7
-                        font_thickness = 2
-                        (text_width, text_height), baseline = cv2.getTextSize(label, font, font_scale, font_thickness)
-                        
-                        # Draw background rectangle untuk text (emas gelap)
-                        text_bg_x1 = x
-                        text_bg_y1 = y - text_height - baseline - 10
-                        text_bg_x2 = x + text_width + 10
-                        text_bg_y2 = y
-                        
-                        # Pastikan background text tidak keluar dari frame
-                        if text_bg_y1 < 0:
-                            text_bg_y1 = y + h
-                            text_bg_y2 = y + h + text_height + baseline + 10
-                        
-                        # Draw background rectangle
-                        cv2.rectangle(frame, (text_bg_x1, text_bg_y1), (text_bg_x2, text_bg_y2), text_background_color, -1)
-                        
-                        # Draw border untuk background text
-                        cv2.rectangle(frame, (text_bg_x1, text_bg_y1), (text_bg_x2, text_bg_y2), golden_color, 2)
-                        
-                        # Draw text label (putih untuk kontras dengan background emas)
-                        text_x = x + 5
-                        text_y = text_bg_y1 + text_height + 5 if text_bg_y1 >= 0 else text_bg_y2 - 5
-                        cv2.putText(frame, label, (text_x, text_y), font, font_scale, (255, 255, 255), font_thickness)
-                        
+                        # Tetap tambahkan untuk tracking meski overlay hidden
                         center_x = x + w // 2
                         center_y = y + h // 2
                         persons.append((center_x, center_y))
             
+            logger.debug(f"👁️ Motion detection: {len(persons)} detections, Overlay: {'ON' if self.show_detection_overlay else 'OFF'}")
             return frame, persons
             
         except Exception as e:
@@ -1590,7 +1600,8 @@ class MultiSourceCCTV:
             ("Track: ON" if self.motion_tracking else "Track: OFF", white_color),
             (f"People: {detection_person_count}", white_color),
             (f"Det: {detection_method}", white_color),
-            (f"YOLO: {current_input_size}x{current_input_size}" if self.yolo_enabled else "", white_color)
+            (f"YOLO: {current_input_size}x{current_input_size}" if self.yolo_enabled else "", white_color),
+            (f"Overlay: {'ON' if self.show_detection_overlay else 'OFF'}", white_color)
         ]
         
         # Tambah info timing mode
@@ -2159,6 +2170,18 @@ def toggle_tracking():
         'tracking_enabled': cctv_system.motion_tracking
     })
 
+@app.route('/toggle_detection_overlay', methods=['POST'])
+def toggle_detection_overlay():
+    """Toggle detection overlay visibility"""
+    cctv_system.show_detection_overlay = not cctv_system.show_detection_overlay
+    logger.info(f"Detection overlay toggled: {'ON' if cctv_system.show_detection_overlay else 'OFF'}")
+    
+    return jsonify({
+        'success': True, 
+        'overlay_enabled': cctv_system.show_detection_overlay,
+        'message': f"Detection overlay {'enabled' if cctv_system.show_detection_overlay else 'disabled'}"
+    })
+
 @app.route('/toggle_yolo', methods=['POST'])
 def toggle_yolo():
     if not cctv_system.yolo_ready:
@@ -2213,6 +2236,7 @@ def status():
         'ptz_available': cctv_system.ptz_service is not None and cctv_system.source_type == 'rtsp',
         'yolo_available': cctv_system.yolo_ready,
         'yolo_enabled': cctv_system.yolo_enabled,
+        'show_detection_overlay': cctv_system.show_detection_overlay,  # NEW: Detection overlay status
         'person_count': cctv_system.person_count,
         'detection_method': detection_method,
         'onvif_status': onvif_status_text,
@@ -2363,6 +2387,7 @@ def disconnect():
         # Reset system state
         cctv_system.motion_tracking = False
         cctv_system.detection_enabled = False
+        cctv_system.show_detection_overlay = True  # Reset to default
         cctv_system.person_count = 0
         cctv_system.last_person_position = None
         
@@ -2404,6 +2429,7 @@ def background_status_update():
                     'ptz_available': cctv_system.ptz_service is not None and cctv_system.source_type == 'rtsp',
                     'yolo_available': cctv_system.yolo_ready,
                     'yolo_enabled': cctv_system.yolo_enabled,
+                    'show_detection_overlay': cctv_system.show_detection_overlay,
                     'person_count': cctv_system.person_count,
                     'fps': round(cctv_system.performance_stats['stream_fps'], 1),
                     'quality': cctv_system.stream_quality,
@@ -2482,6 +2508,7 @@ if __name__ == '__main__':
     print("   • Enhanced error handling per source type ✅")
     print("   • File timing preservation controls ✅")
     print("   • Fixed YOLOv8 import timeout issues ✅")
+    print("   • Toggleable detection overlay (hide/show bounding boxes) ✅")
     
     if YT_DLP_AVAILABLE:
         print("   • yt-dlp integration for enhanced streaming ✅")
@@ -2498,10 +2525,12 @@ if __name__ == '__main__':
         print(f"   • Confidence threshold adjustment ✅")
         print(f"   • GPU acceleration (if available) ✅")
         print(f"   • Enhanced import timeout handling ✅")
+        print(f"   • Toggleable detection overlay (hide/show boxes) ✅")
     else:
         print("   • Install with: pip install ultralytics ⚠️")
         print("   • Will use motion detection fallback ✅")
         print("   • Fixed import timeout issues ✅")
+        print("   • Toggleable detection overlay (hide/show boxes) ✅")
     
     print("\n⚡ ULTRA LOW-LATENCY STREAMING:")
     print("   • Separated capture and streaming threads ✅")
@@ -2526,6 +2555,7 @@ if __name__ == '__main__':
     print("   • Responsive design for mobile/desktop ✅")
     print("   • Fullscreen video viewing ✅")
     print("   • File timing controls ✅")
+    print("   • Toggleable detection overlay (show/hide boxes) ✅")
     
     print("\n💡 QUICK START EXAMPLES:")
     print("   📹 RTSP: rtsp://192.168.1.100:554/stream1")
@@ -2555,6 +2585,10 @@ if __name__ == '__main__':
         print("   • Auto-detection File vs Live Stream URLs ✅")
         print("   • Fixed fast playback issue ✅")
         print("   • Enhanced YOLOv8 import handling ✅")
+        print("🔲 Detection Overlay Toggle: ENABLED")
+        print("   • Hide/show bounding boxes while keeping detection active ✅")
+        print("   • Independent control for clean video view ✅")
+        print("   • Background processing continues regardless ✅")
         
         socketio.run(app, host='0.0.0.0', port=4000, debug=False)
         

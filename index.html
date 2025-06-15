@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multi-Source CCTV System - YOLOv8 AI with Fixed File Timing</title>
+    <title>Multi-Source CCTV System - YOLOv8 AI with Toggleable Detection Overlay</title>
     <style>
         * {
             margin: 0;
@@ -724,7 +724,7 @@
     <div class="container">
         <div class="header">
             <h1>🚀 Multi-Source CCTV System</h1>
-            <p class="subtitle">YOLOv8 AI Detection • RTSP • Webcam • Live Streams • Fixed File Timing Preservation</p>
+            <p class="subtitle">YOLOv8 AI Detection • RTSP • Webcam • Live Streams • Fixed File Timing • Toggleable Detection Overlay</p>
             <div class="performance-indicator">
                 ⚡ FPS: <span id="headerFps">--</span> | Quality: <span id="headerQuality">--</span>% | Load: <span id="headerLoad">Low</span> | Source: <span id="headerSource">None</span>
                 <!-- Live Stream Indicator -->
@@ -752,7 +752,7 @@
                     </div>
                     <img id="videoFeed" style="display: none;" alt="Video Feed">
                     <div id="noVideo" class="no-video">
-                        📹 Select a video source to start YOLOv8 AI streaming with original timing preservation
+                        📹 Select a video source to start YOLOv8 AI streaming with toggleable detection overlay
                     </div>
                 </div>
             </div>
@@ -1038,6 +1038,14 @@
                         </div>
                     </div>
                     
+                    <!-- Detection Overlay Toggle -->
+                    <div class="yolo-toggle" style="margin-top: 10px;">
+                        <span>🔲 Show Detection Boxes:</span>
+                        <div class="toggle-switch active" id="overlayToggle" onclick="toggleDetectionOverlay()">
+                            <div class="toggle-slider"></div>
+                        </div>
+                    </div>
+                    
                     <div class="yolo-controls">
                         <div class="slider-group">
                             <label>Confidence: <span id="confidenceValue">40%</span></label>
@@ -1071,6 +1079,14 @@
                         <div class="status-item">
                             <div>People</div>
                             <div id="personCount">0</div>
+                        </div>
+                        <div class="status-item">
+                            <div>🔲 Overlay</div>
+                            <div id="overlayStatus">ON</div>
+                        </div>
+                        <div class="status-item">
+                            <div>Detection</div>
+                            <div id="detectionStatus">Ready</div>
                         </div>
                     </div>
                 </div>
@@ -1147,6 +1163,7 @@
         let isConnected = false;
         let trackingEnabled = false;
         let yoloEnabled = false;
+        let showDetectionOverlay = true;  // NEW: Detection overlay state
         let ptzAvailable = false;
         let statusInterval = null;
         let currentVideoMode = 'cover';
@@ -1797,6 +1814,25 @@
             }
         }
 
+        // NEW: Toggle detection overlay function
+        async function toggleDetectionOverlay() {
+            try {
+                const response = await fetch('/toggle_detection_overlay', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    showDetectionOverlay = result.overlay_enabled;
+                    updateDetectionOverlayStatus();
+                    showMessage(result.message, 'success');
+                }
+            } catch (error) {
+                showMessage('Toggle detection overlay error', 'error');
+            }
+        }
+
         // PTZ functions
         async function movePTZ(pan, tilt, zoom) {
             if (!isConnected || !ptzAvailable) {
@@ -1853,6 +1889,20 @@
             }
         }
 
+        // NEW: Update detection overlay status
+        function updateDetectionOverlayStatus() {
+            const toggle = document.getElementById('overlayToggle');
+            const overlayStatus = document.getElementById('overlayStatus');
+            
+            if (showDetectionOverlay) {
+                toggle.classList.add('active');
+                if (overlayStatus) overlayStatus.textContent = 'ON';
+            } else {
+                toggle.classList.remove('active');
+                if (overlayStatus) overlayStatus.textContent = 'OFF';
+            }
+        }
+
         function enablePTZControls() {
             const ptzButtons = document.querySelectorAll('.ptz-btn');
             ptzButtons.forEach(btn => {
@@ -1898,10 +1948,12 @@
                 trackingEnabled = status.tracking_enabled;
                 ptzAvailable = status.ptz_available;
                 yoloEnabled = status.yolo_enabled;
+                showDetectionOverlay = status.show_detection_overlay !== undefined ? status.show_detection_overlay : true;
                 
                 updateConnectionStatus(isConnected);
                 updateTrackingStatus();
                 updateYOLOStatus();
+                updateDetectionOverlayStatus();  // NEW: Update detection overlay status
                 enablePTZControls();
                 
                 // Update status displays
@@ -1909,6 +1961,22 @@
                 document.getElementById('ptzStatus').textContent = ptzAvailable ? '✅' : '❌';
                 document.getElementById('personCount').textContent = status.person_count || 0;
                 document.getElementById('onvifStatus').textContent = status.onvif_status || 'Not available';
+                
+                // Update detection status
+                const detectionStatus = document.getElementById('detectionStatus');
+                if (detectionStatus) {
+                    if (yoloEnabled && showDetectionOverlay) {
+                        detectionStatus.textContent = 'AI + Boxes';
+                    } else if (yoloEnabled && !showDetectionOverlay) {
+                        detectionStatus.textContent = 'AI Only';
+                    } else if (status.detection_method && status.detection_method.includes('Motion') && showDetectionOverlay) {
+                        detectionStatus.textContent = 'Motion + Boxes';
+                    } else if (status.detection_method && status.detection_method.includes('Motion') && !showDetectionOverlay) {
+                        detectionStatus.textContent = 'Motion Only';
+                    } else {
+                        detectionStatus.textContent = 'Off';
+                    }
+                }
                 
                 // Update YOLOv8 info
                 if (status.yolo_device) {
@@ -2045,7 +2113,9 @@
             isConnected = false;
             isLiveStream = false;
             isFileWithTiming = false;
+            showDetectionOverlay = true; // Reset to default
             updateConnectionStatus(false);
+            updateDetectionOverlayStatus(); // Reset overlay status
             showLiveStreamUI(false);
             showFileTimingUI(false);
             
@@ -2055,7 +2125,7 @@
             videoFeed.src = '';
             videoFeed.style.display = 'none';
             noVideo.style.display = 'block';
-            noVideo.textContent = '📹 Select a video source to start YOLOv8 AI streaming with original timing preservation';
+            noVideo.textContent = '📹 Select a video source to start YOLOv8 AI streaming with toggleable detection overlay';
             
             connectBtn.style.display = 'block';
             connectBtn.disabled = false;
@@ -2087,6 +2157,9 @@
             document.getElementById('trackingSensitivityValue').textContent = trackingSensitivity;
             document.getElementById('ptzSpeedSlider').value = ptzSpeed;
             document.getElementById('ptzSpeedValue').textContent = ptzSpeed.toFixed(1);
+            
+            // Set initial detection overlay status
+            updateDetectionOverlayStatus();
             
             // Setup enhanced file URL handling
             setupFileUrlHandler();
@@ -2122,9 +2195,11 @@
             console.log('📡 Supported sources: RTSP/IP, Webcam, Live Streams, Files');
             console.log('🔴 Live Stream Support Initialized');
             console.log('📁 File Timing Support Initialized');
+            console.log('🔲 Detection Overlay Toggle Initialized');
             console.log('📺 Supported: YouTube Live, Twitch, HLS, Facebook Live, Instagram Live');
             console.log('⚡ Original timing preservation enabled for all sources');
             console.log('🎯 Fixed file playback speed issues');
+            console.log('👁️ Detection boxes can now be hidden while keeping tracking active');
         });
 
         // Enhanced error handling for video feed
@@ -2143,7 +2218,7 @@
                 if (!isConnected) {
                     videoFeed.style.display = 'none';
                     document.getElementById('noVideo').style.display = 'block';
-                    document.getElementById('noVideo').textContent = '📹 Select a video source to start YOLOv8 AI streaming with original timing preservation';
+                    document.getElementById('noVideo').textContent = '📹 Select a video source to start YOLOv8 AI streaming with toggleable detection overlay';
                 }
             });
         });
