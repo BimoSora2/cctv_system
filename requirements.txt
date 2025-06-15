@@ -1,0 +1,108 @@
+# YOLOv8 CCTV System Requirements
+# Enhanced Multi-Source Support with Live Streaming
+# Install with: pip install -r requirements.txt
+
+# Core Computer Vision
+opencv-python>=4.5.0
+numpy>=1.19.0
+
+# Web Framework
+flask>=2.0.0
+flask-socketio>=5.0.0
+
+# Camera Control
+onvif-zeep>=0.2.12
+
+# YOLOv8 AI Detection
+ultralytics>=8.0.0
+
+# Deep Learning Framework
+torch>=1.9.0
+torchvision>=0.10.0
+
+# Live Streaming Support
+yt-dlp>=2023.1.6
+
+# Image Processing
+Pillow>=8.0.0
+
+# Utilities
+requests>=2.25.0
+psutil>=5.8.0
+
+# Optional: GPU monitoring (if using NVIDIA GPU)
+# pynvml>=11.0.0
+
+# Optional: Additional ONVIF support
+# zeep>=4.0.0
+
+# Optional: Enhanced streaming support
+# streamlink>=5.0.0
+
+# Optional: Audio processing for streams with audio
+# ffmpeg-python>=0.2.0
+
+# Development tools (optional)
+# pytest>=6.0.0
+# black>=21.0.0
+# flake8>=3.8.0
+
+# ============================================
+# Installation Notes:
+# ============================================
+#
+# Quick Install:
+# pip install -r requirements.txt
+#
+# GPU Support (NVIDIA):
+# pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
+#
+# CPU Only (Compatible with all systems):
+# pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+#
+# ============================================
+# Supported Features:
+# ============================================
+#
+# Video Sources:
+# • RTSP/IP Cameras with ONVIF PTZ control
+# • USB/Built-in Webcams with auto-detection  
+# • YouTube Live streams (requires yt-dlp)
+# • Twitch live streams
+# • HLS (.m3u8) live streams
+# • Video files (MP4, AVI, MOV, etc.)
+# • HTTP/HTTPS direct streams
+#
+# AI Detection:
+# • YOLOv8 person detection
+# • Real-time object tracking
+# • GPU acceleration support
+# • Multiple model sizes (nano to extra-large)
+#
+# Control Features:
+# • PTZ camera control via ONVIF
+# • Auto person tracking
+# • Motion detection fallback
+# • Live stream timing preservation
+#
+# ============================================
+# Troubleshooting:
+# ============================================
+#
+# If installation fails:
+# pip install --no-cache-dir -r requirements.txt
+#
+# For YouTube Live issues:
+# pip install --upgrade yt-dlp
+#
+# For CUDA issues:
+# 1. Check NVIDIA driver: nvidia-smi
+# 2. Install appropriate PyTorch version
+# 3. Verify CUDA compatibility
+#
+# For camera connection issues:
+# 1. Check firewall settings
+# 2. Verify camera IP and credentials
+# 3. Test RTSP URL in VLC player first
+#
+# ============================================

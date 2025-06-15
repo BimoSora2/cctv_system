@@ -1,0 +1,2152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Source CCTV System - YOLOv8 AI with Fixed File Timing</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.4rem;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #4CAF50, #87CEEB);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header .subtitle {
+            color: #87CEEB;
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+
+        .performance-indicator {
+            background: rgba(76, 175, 80, 0.1);
+            border: 1px solid #4CAF50;
+            border-radius: 8px;
+            padding: 10px 20px;
+            margin: 10px auto;
+            max-width: 600px;
+            font-size: 0.9rem;
+            position: relative;
+        }
+
+        .yolo-status-header {
+            background: rgba(135, 206, 235, 0.1);
+            border: 1px solid #87CEEB;
+            border-radius: 8px;
+            padding: 8px 16px;
+            margin: 8px auto;
+            max-width: 500px;
+            font-size: 0.85rem;
+            color: #87CEEB;
+        }
+
+        /* Live Stream Info Panel */
+        .live-stream-info {
+            background: rgba(255, 68, 68, 0.1);
+            border: 1px solid rgba(255, 68, 68, 0.3);
+            border-radius: 8px;
+            padding: 8px 16px;
+            margin: 8px auto;
+            max-width: 600px;
+            font-size: 0.85rem;
+            color: #ff4444;
+            text-align: center;
+            display: none;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 20px;
+            height: calc(100vh - 220px);
+        }
+
+        .video-section {
+            background: #16213e;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #2a4a6b;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .video-container {
+            background: #000;
+            border-radius: 8px;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Live Stream Video Container Enhancement */
+        .video-container.live-stream::before {
+            content: "🔴 LIVE";
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: rgba(255, 68, 68, 0.9);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            z-index: 5;
+            animation: livePulse 2s infinite;
+        }
+
+        /* File Original Timing Container Enhancement */
+        .video-container.file-timing::before {
+            content: "⏱️ ORIG";
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: rgba(135, 206, 235, 0.9);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            z-index: 5;
+        }
+
+        @keyframes livePulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+        #videoFeed {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+            border-radius: 8px;
+        }
+
+        .no-video {
+            color: #666;
+            font-size: 1.2rem;
+            text-align: center;
+            position: absolute;
+            z-index: 1;
+        }
+
+        .controls-panel {
+            background: #16213e;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #2a4a6b;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            overflow-y: auto;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .control-section {
+            background: #1e2b47;
+            border-radius: 8px;
+            padding: 16px;
+            border: 1px solid #2a4a6b;
+        }
+
+        .control-section h3 {
+            margin-bottom: 16px;
+            color: #4CAF50;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .source-type-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .source-type-btn {
+            padding: 10px;
+            border: 2px solid #444;
+            border-radius: 6px;
+            background: #2a2a2a;
+            color: white;
+            cursor: pointer;
+            text-align: center;
+            font-size: 11px;
+            transition: all 0.3s ease;
+        }
+
+        .source-type-btn:hover {
+            border-color: #4CAF50;
+            background: #333;
+        }
+
+        .source-type-btn.active {
+            border-color: #4CAF50;
+            background: rgba(76, 175, 80, 0.2);
+            color: #4CAF50;
+        }
+
+        .source-config {
+            display: none;
+        }
+
+        .source-config.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 13px;
+            color: #ccc;
+            font-weight: 500;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #444;
+            border-radius: 6px;
+            background: #2a2a2a;
+            color: white;
+            font-size: 13px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            width: 100%;
+            margin-top: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: linear-gradient(45deg, #45a049, #3d8b40);
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: linear-gradient(45deg, #f44336, #d32f2f);
+            color: white;
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            background: linear-gradient(45deg, #d32f2f, #c62828);
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .webcam-list {
+            max-height: 120px;
+            overflow-y: auto;
+            border: 1px solid #444;
+            border-radius: 6px;
+            background: #2a2a2a;
+        }
+
+        .webcam-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #444;
+            transition: background-color 0.3s ease;
+        }
+
+        .webcam-item:hover {
+            background: #333;
+        }
+
+        .webcam-item.selected {
+            background: rgba(76, 175, 80, 0.2);
+            color: #4CAF50;
+        }
+
+        .webcam-item:last-child {
+            border-bottom: none;
+        }
+
+        .stream-templates {
+            margin-bottom: 12px;
+        }
+
+        .template-btn {
+            padding: 6px 10px;
+            margin: 2px;
+            border: 1px solid #444;
+            border-radius: 4px;
+            background: #333;
+            color: #ccc;
+            cursor: pointer;
+            font-size: 11px;
+            transition: all 0.3s ease;
+        }
+
+        .template-btn:hover {
+            border-color: #4CAF50;
+            color: #4CAF50;
+        }
+
+        /* Live Stream Template Styling */
+        .template-btn.live-template {
+            background: rgba(255, 68, 68, 0.1);
+            border-color: #ff4444;
+            color: #ff4444;
+        }
+
+        .template-btn.live-template:hover {
+            background: rgba(255, 68, 68, 0.2);
+            border-color: #ff6666;
+            color: #ff6666;
+        }
+
+        /* Live Stream Settings Panel */
+        .live-stream-settings {
+            background: rgba(255, 68, 68, 0.1);
+            border: 1px solid rgba(255, 68, 68, 0.3);
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        .live-stream-settings h4 {
+            color: #ff4444;
+            margin-bottom: 10px;
+        }
+
+        /* File Timing Settings Panel */
+        .file-timing-settings {
+            background: rgba(135, 206, 235, 0.1);
+            border: 1px solid rgba(135, 206, 235, 0.3);
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        .file-timing-settings h4 {
+            color: #87CEEB;
+            margin-bottom: 10px;
+        }
+
+        .source-info {
+            background: rgba(135, 206, 235, 0.1);
+            border: 1px solid rgba(135, 206, 235, 0.3);
+            border-radius: 6px;
+            padding: 10px;
+            margin-top: 12px;
+            font-size: 11px;
+            color: #87CEEB;
+        }
+
+        .tips {
+            font-size: 10px;
+            color: #888;
+            margin-top: 8px;
+            line-height: 1.4;
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-connected { background: #4CAF50; }
+        .status-disconnected { background: #f44336; }
+
+        .ptz-controls {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .ptz-btn {
+            padding: 14px;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            text-align: center;
+            font-size: 18px;
+            transition: all 0.3s ease;
+        }
+
+        .ptz-btn:hover:not(.disabled) {
+            background: #333;
+            transform: scale(1.05);
+        }
+
+        .ptz-btn.disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .tracking-toggle, .yolo-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #2a2a2a;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 10px;
+        }
+
+        .yolo-toggle {
+            background: rgba(135, 206, 235, 0.1);
+            border: 1px solid rgba(135, 206, 235, 0.3);
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 24px;
+            background: #444;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .toggle-switch.active {
+            background: #4CAF50;
+        }
+
+        .yolo-toggle .toggle-switch.active {
+            background: #87CEEB;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s ease;
+        }
+
+        .toggle-switch.active .toggle-slider {
+            transform: translateX(26px);
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .status-item {
+            background: #2a2a2a;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .status-item.full-width {
+            grid-column: 1 / -1;
+        }
+
+        /* Live Stream Status Items */
+        .status-item.live-status {
+            background: rgba(255, 68, 68, 0.1) !important;
+            border: 1px solid rgba(255, 68, 68, 0.3) !important;
+            color: #ff4444 !important;
+            display: none;
+        }
+
+        /* File Timing Status Items */
+        .status-item.file-status {
+            background: rgba(135, 206, 235, 0.1) !important;
+            border: 1px solid rgba(135, 206, 235, 0.3) !important;
+            color: #87CEEB !important;
+            display: none;
+        }
+
+        .message {
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 10px;
+            font-size: 12px;
+        }
+
+        .error-message {
+            background: rgba(244, 67, 54, 0.2);
+            border: 1px solid #f44336;
+            color: #ffcdd2;
+        }
+
+        .success-message {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid #4CAF50;
+            color: #c8e6c9;
+        }
+
+        .video-options {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 10;
+            display: flex;
+            gap: 6px;
+        }
+
+        .video-option-btn {
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid #444;
+            color: white;
+            padding: 8px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .video-option-btn:hover {
+            background: rgba(0, 0, 0, 0.9);
+        }
+
+        .video-option-btn.active {
+            background: #4CAF50;
+            border-color: #4CAF50;
+        }
+
+        .slider-group {
+            margin-bottom: 10px;
+        }
+
+        .slider-group label {
+            font-size: 12px;
+            color: #ccc;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .slider-group input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #444;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #4CAF50;
+            cursor: pointer;
+        }
+
+        .yolo-controls {
+            background: rgba(135, 206, 235, 0.1);
+            border: 1px solid rgba(135, 206, 235, 0.3);
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        .yolo-controls .slider-group label {
+            color: #87CEEB;
+        }
+
+        .yolo-controls .slider-group input[type="range"]::-webkit-slider-thumb {
+            background: #87CEEB;
+        }
+
+        .source-type-indicator {
+            background: rgba(76, 175, 80, 0.1);
+            border: 1px solid #4CAF50;
+            color: #4CAF50;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        /* Live Stream Indicator */
+        .live-indicator {
+            background: #ff4444;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            margin-left: 8px;
+            animation: livePulse 2s infinite;
+            display: none;
+        }
+
+        /* File Timing Indicator */
+        .file-indicator {
+            background: #87CEEB;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            margin-left: 8px;
+            display: none;
+        }
+
+        /* Detection hint */
+        .detection-hint {
+            font-size: 11px;
+            margin-top: 5px;
+            padding: 5px;
+            border-radius: 4px;
+            background: rgba(135,206,235,0.1);
+            border: 1px solid rgba(135,206,235,0.3);
+            color: #87CEEB;
+        }
+
+        .detection-hint.live {
+            background: rgba(255,68,68,0.1);
+            border-color: rgba(255,68,68,0.3);
+            color: #ff4444;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .video-section {
+                min-height: 300px;
+            }
+
+            .source-type-selector {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* Fullscreen styles */
+        .video-container.fullscreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1000;
+            border-radius: 0;
+        }
+
+        .video-container.fullscreen #videoFeed {
+            border-radius: 0;
+        }
+
+        /* Animation */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            animation: pulse 0.6s ease-in-out;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Multi-Source CCTV System</h1>
+            <p class="subtitle">YOLOv8 AI Detection • RTSP • Webcam • Live Streams • Fixed File Timing Preservation</p>
+            <div class="performance-indicator">
+                ⚡ FPS: <span id="headerFps">--</span> | Quality: <span id="headerQuality">--</span>% | Load: <span id="headerLoad">Low</span> | Source: <span id="headerSource">None</span>
+                <!-- Live Stream Indicator -->
+                <span id="liveIndicator" class="live-indicator">🔴 LIVE</span>
+                <!-- File Timing Indicator -->
+                <span id="fileIndicator" class="file-indicator">⏱️ ORIG</span>
+            </div>
+            <div class="yolo-status-header" id="yoloHeaderStatus">
+                🤖 YOLOv8: <span id="headerYoloModel">Checking...</span> | Device: <span id="headerYoloDevice">--</span>
+            </div>
+            <!-- Live Stream Info Panel -->
+            <div id="liveStreamInfo" class="live-stream-info">
+                🔴 Live Stream Active | Original FPS: <span id="originalFps">--</span> | Timing: <span id="timingMode">Preserved</span>
+            </div>
+        </div>
+
+        <div class="main-grid">
+            <!-- Video Section -->
+            <div class="video-section">
+                <div class="video-container" id="videoContainer">
+                    <div class="video-options">
+                        <button class="video-option-btn active" onclick="setVideoMode('cover')" title="Full Frame">📏</button>
+                        <button class="video-option-btn" onclick="setVideoMode('contain')" title="Fit Container">📐</button>
+                        <button class="video-option-btn" onclick="toggleFullscreen()" title="Fullscreen">⛶</button>
+                    </div>
+                    <img id="videoFeed" style="display: none;" alt="Video Feed">
+                    <div id="noVideo" class="no-video">
+                        📹 Select a video source to start YOLOv8 AI streaming with original timing preservation
+                    </div>
+                </div>
+            </div>
+
+            <!-- Controls Panel -->
+            <div class="controls-panel">
+                <!-- Source Selection -->
+                <div class="control-section">
+                    <h3>📡 Video Source Selection</h3>
+                    
+                    <div class="source-type-selector">
+                        <div class="source-type-btn active" onclick="selectSourceType('rtsp')">
+                            📹 RTSP/IP
+                        </div>
+                        <div class="source-type-btn" onclick="selectSourceType('webcam')">
+                            🎥 Webcam
+                        </div>
+                        <div class="source-type-btn" onclick="selectSourceType('stream')">
+                            📺 Live Stream
+                        </div>
+                        <div class="source-type-btn" onclick="selectSourceType('file')">
+                            📁 File/URL
+                        </div>
+                    </div>
+
+                    <div id="currentSourceIndicator" class="source-type-indicator">
+                        Current: RTSP/IP Camera with ONVIF
+                    </div>
+
+                    <!-- RTSP/IP Camera Configuration -->
+                    <div id="rtspConfig" class="source-config active">
+                        <div class="form-group">
+                            <label>RTSP URL:</label>
+                            <input type="text" id="rtspUrl" placeholder="rtsp://192.168.1.100:554/stream1">
+                        </div>
+                        <div class="form-group">
+                            <label>Camera IP (for PTZ/ONVIF):</label>
+                            <input type="text" id="cameraIp" placeholder="192.168.1.100 (optional for PTZ)">
+                        </div>
+                        <div class="form-group">
+                            <label>ONVIF Port:</label>
+                            <input type="number" id="cameraPort" value="80" placeholder="80">
+                        </div>
+                        <div class="form-group">
+                            <label>Username:</label>
+                            <input type="text" id="username" placeholder="Leave empty if not needed">
+                        </div>
+                        <div class="form-group">
+                            <label>Password:</label>
+                            <input type="password" id="password" placeholder="Leave empty if not needed">
+                        </div>
+                        <div class="tips">
+                            💡 <strong>Smart Discovery:</strong> System will auto-detect ONVIF settings<br>
+                            🔓 No auth → 👤 Username only → 🔐 Full auth
+                        </div>
+                    </div>
+
+                    <!-- Webcam Configuration -->
+                    <div id="webcamConfig" class="source-config">
+                        <div class="form-group">
+                            <label>Available Webcams:</label>
+                            <div id="webcamList" class="webcam-list">
+                                <div class="webcam-item" onclick="selectWebcam(-1)">
+                                    🔍 Scanning for webcams...
+                                </div>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary" onclick="refreshWebcams()" style="margin-top: 8px;">
+                            🔄 Refresh Webcam List
+                        </button>
+                        <div class="source-info">
+                            📹 <strong>Webcam Support:</strong><br>
+                            • USB cameras (built-in/external)<br>
+                            • DirectShow compatible devices<br>
+                            • Auto-detection with device info
+                        </div>
+                    </div>
+
+                    <!-- Live Stream Configuration -->
+                    <div id="streamConfig" class="source-config">
+                        <div class="stream-templates">
+                            <div style="margin-bottom: 8px; font-size: 12px; color: #ccc;">Live Stream Templates:</div>
+                            <button class="template-btn live-template" onclick="setStreamTemplate('youtube_live')">🔴 YouTube Live</button>
+                            <button class="template-btn live-template" onclick="setStreamTemplate('twitch_live')">🔴 Twitch Live</button>
+                            <button class="template-btn" onclick="setStreamTemplate('http')">🌐 HTTP Stream</button>
+                            <button class="template-btn live-template" onclick="setStreamTemplate('hls_live')">🔴 HLS Live</button>
+                            <button class="template-btn live-template" onclick="setStreamTemplate('facebook_live')">🔴 Facebook Live</button>
+                            <button class="template-btn live-template" onclick="setStreamTemplate('instagram_live')">🔴 Instagram Live</button>
+                        </div>
+                        <div class="form-group">
+                            <label>Stream URL:</label>
+                            <input type="text" id="streamUrl" placeholder="https://example.com/stream.m3u8">
+                        </div>
+                        <div class="form-group">
+                            <label>Stream Type:</label>
+                            <select id="streamType">
+                                <option value="auto">Auto Detect</option>
+                                <option value="hls">HLS (.m3u8)</option>
+                                <option value="dash">DASH (.mpd)</option>
+                                <option value="http">HTTP Stream</option>
+                                <option value="youtube">YouTube Live</option>
+                                <option value="twitch">Twitch Stream</option>
+                                <option value="facebook">Facebook Live</option>
+                                <option value="instagram">Instagram Live</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Live Stream Settings -->
+                        <div class="live-stream-settings">
+                            <h4>🔴 Live Stream Settings</h4>
+                            
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" id="preserveTiming" checked> 
+                                    Preserve Original Timing (Recommended for live streams)
+                                </label>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Buffer Size:</label>
+                                <select id="liveBufferSize">
+                                    <option value="minimal">Minimal (Best for live)</option>
+                                    <option value="small">Small</option>
+                                    <option value="medium">Medium</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Connection Timeout:</label>
+                                <select id="liveTimeout">
+                                    <option value="15">15 seconds (Recommended)</option>
+                                    <option value="10">10 seconds</option>
+                                    <option value="20">20 seconds</option>
+                                    <option value="30">30 seconds</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="source-info">
+                            🔴 <strong>Live Stream Support:</strong><br>
+                            • YouTube Live streams with original timing<br>
+                            • Twitch streams with real-time playback<br>
+                            • HLS (.m3u8) live streams<br>
+                            • Facebook & Instagram Live<br>
+                            • HTTP/HTTPS live streams<br>
+                            • DASH adaptive live streams<br>
+                            • ⚡ <strong>Auto-detects live streams and preserves original speed</strong>
+                        </div>
+                    </div>
+
+                    <!-- File/URL Configuration - Enhanced with Timing Control -->
+                    <div id="fileConfig" class="source-config">
+                        <div class="form-group">
+                            <label>File Path or URL:</label>
+                            <input type="text" id="fileUrl" placeholder="/path/to/video.mp4 or http://example.com/video.mp4">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Loop Video:</label>
+                            <select id="loopVideo">
+                                <option value="false">No Loop</option>
+                                <option value="true">Loop Continuously</option>
+                            </select>
+                        </div>
+
+                        <!-- Timing Control for Files -->
+                        <div class="file-timing-settings">
+                            <h4>⏱️ Playback Timing Settings</h4>
+                            
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" id="preserveFileTiming" checked> 
+                                    Preserve Original Speed (Recommended - maintains natural playback speed)
+                                </label>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Auto-detect Stream Type:</label>
+                                <select id="autoDetectType">
+                                    <option value="auto" selected>Auto Detect (Live Stream vs File)</option>
+                                    <option value="force_file">Force File Mode</option>
+                                    <option value="force_live">Force Live Stream Mode</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Buffer Size:</label>
+                                <select id="fileBufferSize">
+                                    <option value="small">Small (Live-like URLs)</option>
+                                    <option value="medium" selected>Medium (Regular files)</option>
+                                    <option value="large">Large (Local files)</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="source-info">
+                            📁 <strong>File/URL Support with Proper Timing:</strong><br>
+                            • Local video files (MP4, AVI, MOV, etc.) with original speed<br>
+                            • Network file URLs with proper timing preservation<br>
+                            • Live stream URLs auto-detected and handled properly<br>
+                            • YouTube video files vs YouTube Live auto-detection<br>
+                            • HLS files (.m3u8) vs HLS live streams<br>
+                            • ⚡ <strong>Auto-detects file vs live stream for proper playback speed</strong><br>
+                            • 🎯 <strong>Preserves original timing for natural playback</strong>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary" id="connectBtn" onclick="connectSource()">
+                        🚀 Connect to Source
+                    </button>
+                    <button class="btn btn-danger" id="disconnectBtn" onclick="forceDisconnect()" style="display: none;">
+                        Force Disconnect
+                    </button>
+                    <div id="connectionMessage"></div>
+                </div>
+
+                <!-- Performance Controls -->
+                <div class="control-section">
+                    <h3>⚡ Performance Settings</h3>
+                    
+                    <div class="slider-group">
+                        <label>Target FPS: <span id="fpsValue">25</span></label>
+                        <input type="range" id="fpsSlider" min="10" max="30" value="25" 
+                               oninput="updateFPS(this.value)">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Quality Mode:</label>
+                        <select id="qualityMode" onchange="updateQualityMode(this.value)">
+                            <option value="auto">Auto (Adaptive)</option>
+                            <option value="high">High Quality</option>
+                            <option value="balanced" selected>Balanced</option>
+                            <option value="performance">Performance</option>
+                        </select>
+                    </div>
+                    
+                    <div class="status-grid">
+                        <div class="status-item">
+                            <div>FPS</div>
+                            <div id="currentFps">--</div>
+                        </div>
+                        <div class="status-item">
+                            <div>Quality</div>
+                            <div id="currentQuality">--</div>
+                        </div>
+                        <div class="status-item">
+                            <div>Latency</div>
+                            <div id="currentLatency">--ms</div>
+                        </div>
+                        <div class="status-item">
+                            <div>Source</div>
+                            <div id="currentSource">None</div>
+                        </div>
+                        <!-- Live Stream Status -->
+                        <div class="status-item live-status" id="liveStatus">
+                            <div>🔴 Live</div>
+                            <div id="liveStreamStatus">Active</div>
+                        </div>
+                        <div class="status-item live-status" id="originalFpsStatus">
+                            <div>Src FPS</div>
+                            <div id="sourceFps">--</div>
+                        </div>
+                        <!-- File Timing Status -->
+                        <div class="status-item file-status" id="fileTimingStatus">
+                            <div>⏱️ File</div>
+                            <div id="fileTimingMode">Original</div>
+                        </div>
+                        <div class="status-item file-status" id="fileFpsStatus">
+                            <div>Src FPS</div>
+                            <div id="fileOriginalFps">--</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- YOLOv8 AI Controls -->
+                <div class="control-section">
+                    <h3>🤖 YOLOv8 AI Detection</h3>
+                    
+                    <div class="yolo-toggle">
+                        <span>🤖 AI Detection:</span>
+                        <div class="toggle-switch" id="yoloToggle" onclick="toggleYOLO()">
+                            <div class="toggle-slider"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="yolo-controls">
+                        <div class="slider-group">
+                            <label>Confidence: <span id="confidenceValue">40%</span></label>
+                            <input type="range" id="confidenceSlider" min="10" max="90" value="40" 
+                                   oninput="updateYoloConfidence(this.value)">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Input Size:</label>
+                            <select id="inputSizeSelect" onchange="updateYoloInputSize(this.value)">
+                                <option value="320" selected>320x320 (Fastest)</option>
+                                <option value="416">416x416 (Balanced)</option>
+                                <option value="640">640x640 (Accurate)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="status-grid">
+                        <div class="status-item">
+                            <div>Model</div>
+                            <div id="yoloModel">--</div>
+                        </div>
+                        <div class="status-item">
+                            <div>Device</div>
+                            <div id="yoloDevice">--</div>
+                        </div>
+                        <div class="status-item">
+                            <div>Size</div>
+                            <div id="yoloInputSize">320</div>
+                        </div>
+                        <div class="status-item">
+                            <div>People</div>
+                            <div id="personCount">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Status -->
+                <div class="control-section">
+                    <h3>📊 System Status</h3>
+                    
+                    <div class="connection-status" id="connectionStatus">
+                        <span class="status-indicator status-disconnected"></span>
+                        <span id="connectionText">Disconnected</span>
+                    </div>
+                    
+                    <div class="tracking-toggle">
+                        <span>🎯 Auto Tracking:</span>
+                        <div class="toggle-switch" id="trackingToggle" onclick="toggleTracking()">
+                            <div class="toggle-slider"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="slider-group">
+                        <label>Tracking Sensitivity: <span id="trackingSensitivityValue">80</span>px</label>
+                        <input type="range" id="trackingSensitivitySlider" min="20" max="200" value="80" 
+                               oninput="updateTrackingSensitivity(this.value)">
+                    </div>
+                    
+                    <div class="status-grid">
+                        <div class="status-item">
+                            <div>📡 Stream</div>
+                            <div id="streamingStatus">❌</div>
+                        </div>
+                        <div class="status-item">
+                            <div>🕹️ PTZ</div>
+                            <div id="ptzStatus">❌</div>
+                        </div>
+                        <div class="status-item full-width">
+                            <div>🌐 ONVIF: <span id="onvifStatus">Not connected</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PTZ Controls -->
+                <div class="control-section">
+                    <h3>🕹️ PTZ Control</h3>
+                    <div class="ptz-controls">
+                        <div></div>
+                        <div class="ptz-btn disabled" onclick="movePTZ(0, 0.5, 0)">⬆️</div>
+                        <div></div>
+                        <div class="ptz-btn disabled" onclick="movePTZ(-0.5, 0, 0)">⬅️</div>
+                        <div class="ptz-btn disabled" onclick="movePTZ(0, 0, 0)">🏠</div>
+                        <div class="ptz-btn disabled" onclick="movePTZ(0.5, 0, 0)">➡️</div>
+                        <div></div>
+                        <div class="ptz-btn disabled" onclick="movePTZ(0, -0.5, 0)">⬇️</div>
+                        <div></div>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px;">
+                        <div class="ptz-btn disabled" onclick="movePTZ(0, 0, 0.3)">🔍+</div>
+                        <div class="ptz-btn disabled" onclick="movePTZ(0, 0, -0.3)">🔍-</div>
+                    </div>
+                    
+                    <div class="slider-group" style="margin-top: 16px;">
+                        <label>PTZ Speed: <span id="ptzSpeedValue">1.0</span>x</label>
+                        <input type="range" id="ptzSpeedSlider" min="0.1" max="2.0" step="0.1" value="1.0" 
+                               oninput="updatePTZSpeed(this.value)">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Enhanced multi-source CCTV system with fixed file timing preservation
+        let isConnected = false;
+        let trackingEnabled = false;
+        let yoloEnabled = false;
+        let ptzAvailable = false;
+        let statusInterval = null;
+        let currentVideoMode = 'cover';
+        let isFullscreen = false;
+        let currentSourceType = 'rtsp';
+        let selectedWebcamIndex = -1;
+        let availableWebcams = [];
+
+        // Performance settings
+        let targetFPS = 25;
+        let yoloConfidence = 40;
+        let yoloInputSize = 320;
+        let trackingSensitivity = 80;
+        let ptzSpeed = 1.0;
+
+        // Enhanced timing settings
+        let isLiveStream = false;
+        let preserveTiming = true;
+        let originalFps = null;
+        let isFileWithTiming = false;
+
+        // Enhanced URL type detection
+        function detectUrlType(url) {
+            const url_lower = url.toLowerCase();
+            
+            // Live stream indicators
+            const liveIndicators = [
+                'live', 'stream', '.m3u8', '.mpd',
+                'youtube.com/watch', 'twitch.tv', 'facebook.com/watch',
+                'instagram.com/live', 'tiktok.com/live'
+            ];
+            
+            // File extensions
+            const fileExtensions = [
+                '.mp4', '.avi', '.mov', '.mkv', '.flv', '.wmv', '.webm',
+                '.m4v', '.3gp', '.ogv', '.ts', '.mts', '.m2ts'
+            ];
+            
+            const isFile = fileExtensions.some(ext => url_lower.endsWith(ext));
+            const isLiveIndicator = liveIndicators.some(indicator => url_lower.includes(indicator));
+            
+            if (isLiveIndicator && !isFile) {
+                return 'live_stream';
+            } else if (isFile) {
+                return 'file';
+            } else {
+                return 'unknown'; // Will be treated as file with original timing
+            }
+        }
+
+        // Source type management
+        function selectSourceType(type) {
+            currentSourceType = type;
+            
+            // Update UI
+            document.querySelectorAll('.source-type-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.source-config').forEach(config => config.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(type + 'Config').classList.add('active');
+            
+            // Update indicator
+            const indicators = {
+                'rtsp': 'RTSP/IP Camera with ONVIF',
+                'webcam': 'USB/Built-in Webcam',
+                'stream': 'Live Stream URL with Original Timing',
+                'file': 'Video File/URL with Timing Control'
+            };
+            
+            document.getElementById('currentSourceIndicator').textContent = `Current: ${indicators[type]}`;
+            
+            // Refresh webcams if webcam selected
+            if (type === 'webcam') {
+                refreshWebcams();
+            }
+        }
+
+        // Webcam management
+        async function refreshWebcams() {
+            const webcamList = document.getElementById('webcamList');
+            webcamList.innerHTML = '<div class="webcam-item">🔍 Scanning for webcams...</div>';
+            
+            try {
+                const response = await fetch('/scan_webcams');
+                const result = await response.json();
+                
+                if (result.success && result.webcams.length > 0) {
+                    availableWebcams = result.webcams;
+                    webcamList.innerHTML = '';
+                    
+                    result.webcams.forEach((webcam, index) => {
+                        const webcamItem = document.createElement('div');
+                        webcamItem.className = 'webcam-item';
+                        webcamItem.onclick = () => selectWebcam(index);
+                        webcamItem.innerHTML = `
+                            📹 ${webcam.name} <br>
+                            <small style="color: #888;">Index: ${webcam.index} | ${webcam.info}</small>
+                        `;
+                        webcamList.appendChild(webcamItem);
+                    });
+                } else {
+                    webcamList.innerHTML = '<div class="webcam-item">❌ No webcams found</div>';
+                }
+            } catch (error) {
+                webcamList.innerHTML = '<div class="webcam-item">❌ Error scanning webcams</div>';
+                console.error('Webcam scan error:', error);
+            }
+        }
+
+        function selectWebcam(index) {
+            selectedWebcamIndex = index;
+            
+            document.querySelectorAll('.webcam-item').forEach(item => item.classList.remove('selected'));
+            if (index >= 0 && index < availableWebcams.length) {
+                document.querySelectorAll('.webcam-item')[index].classList.add('selected');
+            }
+        }
+
+        // Enhanced stream template management dengan live stream support
+        function setStreamTemplate(type) {
+            const streamUrl = document.getElementById('streamUrl');
+            const streamType = document.getElementById('streamType');
+            const preserveTiming = document.getElementById('preserveTiming');
+            
+            const templates = {
+                'youtube_live': {
+                    url: 'https://www.youtube.com/watch?v=LIVE_VIDEO_ID',
+                    type: 'youtube',
+                    live: true
+                },
+                'twitch_live': {
+                    url: 'https://www.twitch.tv/CHANNEL_NAME',
+                    type: 'twitch',
+                    live: true
+                },
+                'facebook_live': {
+                    url: 'https://www.facebook.com/USERNAME/live',
+                    type: 'facebook',
+                    live: true
+                },
+                'instagram_live': {
+                    url: 'https://www.instagram.com/USERNAME/live',
+                    type: 'instagram',
+                    live: true
+                },
+                'hls_live': {
+                    url: 'https://example.com/live/stream.m3u8',
+                    type: 'hls',
+                    live: true
+                },
+                'http': {
+                    url: 'http://example.com/stream.mjpg',
+                    type: 'http',
+                    live: false
+                }
+            };
+            
+            if (templates[type]) {
+                streamUrl.value = templates[type].url;
+                streamType.value = templates[type].type;
+                
+                // Auto-enable preserve timing untuk live streams
+                if (templates[type].live && preserveTiming) {
+                    preserveTiming.checked = true;
+                    showLiveStreamUI(true);
+                } else {
+                    showLiveStreamUI(false);
+                }
+            }
+        }
+
+        // Enhanced file URL input handler
+        function setupFileUrlHandler() {
+            const fileUrlInput = document.getElementById('fileUrl');
+            const autoDetectSelect = document.getElementById('autoDetectType');
+            const preserveFileTimingCheckbox = document.getElementById('preserveFileTiming');
+            
+            if (fileUrlInput) {
+                fileUrlInput.addEventListener('input', function() {
+                    const url = this.value.trim();
+                    if (url && autoDetectSelect && autoDetectSelect.value === 'auto') {
+                        const detectedType = detectUrlType(url);
+                        
+                        // Remove old hint
+                        const existingHint = document.getElementById('detectionHint');
+                        if (existingHint) {
+                            existingHint.remove();
+                        }
+                        
+                        // Create new hint
+                        const hint = document.createElement('div');
+                        hint.id = 'detectionHint';
+                        hint.className = 'detection-hint';
+                        
+                        if (detectedType === 'live_stream') {
+                            hint.innerHTML = '🔴 <strong>Auto-detected:</strong> LIVE STREAM URL - will use live timing preservation';
+                            hint.classList.add('live');
+                        } else {
+                            hint.innerHTML = '📁 <strong>Auto-detected:</strong> FILE URL - will preserve original playback speed';
+                        }
+                        
+                        fileUrlInput.parentNode.appendChild(hint);
+                        
+                        // Auto-enable preserve timing untuk semua jenis
+                        if (preserveFileTimingCheckbox) {
+                            preserveFileTimingCheckbox.checked = true;
+                        }
+                    }
+                });
+            }
+        }
+
+        // Function untuk menampilkan/menyembunyikan UI berbagai mode
+        function showLiveStreamUI(isLive) {
+            const liveIndicator = document.getElementById('liveIndicator');
+            const fileIndicator = document.getElementById('fileIndicator');
+            const liveStreamInfo = document.getElementById('liveStreamInfo');
+            const liveStatus = document.querySelectorAll('.live-status');
+            const fileStatus = document.querySelectorAll('.file-status');
+            const videoContainer = document.getElementById('videoContainer');
+            
+            if (isLive) {
+                // Show live stream UI
+                if (liveIndicator) liveIndicator.style.display = 'inline';
+                if (fileIndicator) fileIndicator.style.display = 'none';
+                if (liveStreamInfo) liveStreamInfo.style.display = 'block';
+                liveStatus.forEach(status => status.style.display = 'block');
+                fileStatus.forEach(status => status.style.display = 'none');
+                if (videoContainer) {
+                    videoContainer.classList.add('live-stream');
+                    videoContainer.classList.remove('file-timing');
+                }
+            } else {
+                // Hide live stream UI
+                if (liveIndicator) liveIndicator.style.display = 'none';
+                if (liveStreamInfo) liveStreamInfo.style.display = 'none';
+                liveStatus.forEach(status => status.style.display = 'none');
+                if (videoContainer) videoContainer.classList.remove('live-stream');
+            }
+        }
+
+        function showFileTimingUI(showFile) {
+            const fileIndicator = document.getElementById('fileIndicator');
+            const liveStreamInfo = document.getElementById('liveStreamInfo');
+            const fileStatus = document.querySelectorAll('.file-status');
+            const videoContainer = document.getElementById('videoContainer');
+            
+            if (showFile) {
+                // Show file timing UI
+                if (fileIndicator) fileIndicator.style.display = 'inline';
+                fileStatus.forEach(status => status.style.display = 'block');
+                if (videoContainer) {
+                    videoContainer.classList.add('file-timing');
+                    videoContainer.classList.remove('live-stream');
+                }
+                
+                // Update info panel for file
+                if (liveStreamInfo) {
+                    liveStreamInfo.style.display = 'block';
+                    liveStreamInfo.style.background = 'rgba(135, 206, 235, 0.1)';
+                    liveStreamInfo.style.borderColor = 'rgba(135, 206, 235, 0.3)';
+                    liveStreamInfo.style.color = '#87CEEB';
+                    liveStreamInfo.innerHTML = `📁 File with Original Timing | Source FPS: <span id="originalFps">--</span> | Mode: <span id="timingMode">Preserved</span>`;
+                }
+            } else {
+                // Hide file timing UI
+                if (fileIndicator) fileIndicator.style.display = 'none';
+                fileStatus.forEach(status => status.style.display = 'none');
+                if (videoContainer) videoContainer.classList.remove('file-timing');
+            }
+        }
+
+        // Enhanced connection function dengan file timing preservation
+        async function connectSource() {
+            const connectBtn = document.getElementById('connectBtn');
+            const disconnectBtn = document.getElementById('disconnectBtn');
+            const messageDiv = document.getElementById('connectionMessage');
+            
+            connectBtn.disabled = true;
+            connectBtn.textContent = 'Connecting...';
+            messageDiv.innerHTML = '';
+            
+            let connectionData = {
+                source_type: currentSourceType
+            };
+            
+            // Prepare connection data based on source type
+            switch (currentSourceType) {
+                case 'rtsp':
+                    const rtspUrl = document.getElementById('rtspUrl').value.trim();
+                    if (!rtspUrl) {
+                        showMessage('Please enter RTSP URL', 'error');
+                        resetConnectButton();
+                        return;
+                    }
+                    connectionData = {
+                        ...connectionData,
+                        rtsp_url: rtspUrl,
+                        camera_ip: document.getElementById('cameraIp').value.trim(),
+                        port: parseInt(document.getElementById('cameraPort').value),
+                        username: document.getElementById('username').value.trim(),
+                        password: document.getElementById('password').value.trim()
+                    };
+                    break;
+                    
+                case 'webcam':
+                    if (selectedWebcamIndex < 0) {
+                        showMessage('Please select a webcam', 'error');
+                        resetConnectButton();
+                        return;
+                    }
+                    connectionData = {
+                        ...connectionData,
+                        webcam_index: selectedWebcamIndex,
+                        webcam_info: availableWebcams[selectedWebcamIndex]
+                    };
+                    break;
+                    
+                case 'stream':
+                    const streamUrl = document.getElementById('streamUrl').value.trim();
+                    const preserveTimingChecked = document.getElementById('preserveTiming')?.checked || false;
+                    const bufferSize = document.getElementById('liveBufferSize')?.value || 'minimal';
+                    const timeout = document.getElementById('liveTimeout')?.value || '15';
+                    
+                    if (!streamUrl) {
+                        showMessage('Please enter stream URL', 'error');
+                        resetConnectButton();
+                        return;
+                    }
+                    
+                    connectionData = {
+                        ...connectionData,
+                        stream_url: streamUrl,
+                        stream_type: document.getElementById('streamType').value,
+                        preserve_timing: preserveTimingChecked,
+                        buffer_size: bufferSize,
+                        connection_timeout: parseInt(timeout) * 1000
+                    };
+                    break;
+                    
+                case 'file':
+                    const fileUrl = document.getElementById('fileUrl').value.trim();
+                    const preserveFileTimingChecked = document.getElementById('preserveFileTiming')?.checked !== false; // Default true
+                    const autoDetectType = document.getElementById('autoDetectType')?.value || 'auto';
+                    const fileBufferSize = document.getElementById('fileBufferSize')?.value || 'medium';
+                    
+                    if (!fileUrl) {
+                        showMessage('Please enter file path or URL', 'error');
+                        resetConnectButton();
+                        return;
+                    }
+                    
+                    // Auto-detect jika perlu
+                    let detectedType = 'file';
+                    if (autoDetectType === 'auto') {
+                        detectedType = detectUrlType(fileUrl);
+                        console.log(`🔍 Auto-detected URL type: ${detectedType} for ${fileUrl}`);
+                    } else if (autoDetectType === 'force_live') {
+                        detectedType = 'live_stream';
+                    } else {
+                        detectedType = 'file';
+                    }
+                    
+                    connectionData = {
+                        ...connectionData,
+                        file_url: fileUrl,
+                        loop_video: document.getElementById('loopVideo').value === 'true',
+                        preserve_file_timing: preserveFileTimingChecked,
+                        auto_detect_type: autoDetectType,
+                        detected_type: detectedType,
+                        file_buffer_size: fileBufferSize
+                    };
+                    
+                    // Show user what was detected
+                    if (autoDetectType === 'auto') {
+                        const detectionMessage = detectedType === 'live_stream' ? 
+                            '🔴 Detected as LIVE STREAM URL - will use live timing' :
+                            '📁 Detected as FILE URL - will preserve original speed';
+                        showMessage(detectionMessage, 'success');
+                    }
+                    break;
+            }
+
+            try {
+                const response = await fetch('/connect_source', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(connectionData)
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    isConnected = true;
+                    showMessage(result.message, 'success');
+                    
+                    // Enhanced detection untuk berbagai mode
+                    isLiveStream = result.is_live_stream || false;
+                    preserveTiming = result.preserve_timing || false;
+                    originalFps = result.original_fps || null;
+                    isFileWithTiming = (currentSourceType === 'file' && preserveTiming && !isLiveStream);
+                    
+                    // Show appropriate UI
+                    if (isLiveStream) {
+                        showLiveStreamUI(true);
+                        showFileTimingUI(false);
+                    } else if (isFileWithTiming) {
+                        showLiveStreamUI(false);
+                        showFileTimingUI(true);
+                    } else {
+                        showLiveStreamUI(false);
+                        showFileTimingUI(false);
+                    }
+                    
+                    startVideoStream();
+                    
+                    connectBtn.style.display = 'none';
+                    disconnectBtn.style.display = 'block';
+                    
+                    startStatusUpdates();
+                    updatePerformanceSettings();
+                    
+                    // Enhanced source indicator
+                    document.getElementById('currentSource').textContent = result.source_type || currentSourceType;
+                    let headerSourceText = result.source_type || currentSourceType;
+                    if (isLiveStream) {
+                        headerSourceText += ' 🔴LIVE';
+                    } else if (isFileWithTiming) {
+                        headerSourceText += ' ⏱️ORIG';
+                    }
+                    document.getElementById('headerSource').textContent = headerSourceText;
+                    
+                    // Update FPS info untuk semua mode
+                    if (originalFps) {
+                        document.getElementById('originalFps').textContent = originalFps.toFixed(1);
+                        document.getElementById('sourceFps').textContent = originalFps.toFixed(1);
+                        document.getElementById('fileOriginalFps').textContent = originalFps.toFixed(1);
+                    }
+                } else {
+                    showMessage('Connection failed: ' + result.message, 'error');
+                }
+            } catch (error) {
+                showMessage('Connection error: ' + error.message, 'error');
+            } finally {
+                resetConnectButton();
+            }
+        }
+
+        function resetConnectButton() {
+            const connectBtn = document.getElementById('connectBtn');
+            connectBtn.disabled = false;
+            connectBtn.textContent = '🚀 Connect to Source';
+        }
+
+        // Video control functions
+        function setVideoMode(mode) {
+            const videoFeed = document.getElementById('videoFeed');
+            const buttons = document.querySelectorAll('.video-option-btn');
+            
+            buttons.forEach(btn => btn.classList.remove('active'));
+            
+            if (mode === 'cover') {
+                buttons[0].classList.add('active');
+                videoFeed.style.objectFit = 'cover';
+            } else if (mode === 'contain') {
+                buttons[1].classList.add('active');
+                videoFeed.style.objectFit = 'contain';
+            }
+            
+            currentVideoMode = mode;
+        }
+
+        function toggleFullscreen() {
+            const videoContainer = document.getElementById('videoContainer');
+            const fullscreenBtn = document.querySelectorAll('.video-option-btn')[2];
+            
+            if (!isFullscreen) {
+                videoContainer.classList.add('fullscreen');
+                fullscreenBtn.classList.add('active');
+                fullscreenBtn.textContent = '⛶';
+                fullscreenBtn.title = 'Exit Fullscreen';
+                isFullscreen = true;
+                document.addEventListener('keydown', handleEscapeKey);
+            } else {
+                exitFullscreen();
+            }
+        }
+
+        function exitFullscreen() {
+            const videoContainer = document.getElementById('videoContainer');
+            const fullscreenBtn = document.querySelectorAll('.video-option-btn')[2];
+            
+            videoContainer.classList.remove('fullscreen');
+            fullscreenBtn.classList.remove('active');
+            fullscreenBtn.textContent = '⛶';
+            fullscreenBtn.title = 'Fullscreen';
+            isFullscreen = false;
+            document.removeEventListener('keydown', handleEscapeKey);
+        }
+
+        function handleEscapeKey(event) {
+            if (event.key === 'Escape' && isFullscreen) {
+                exitFullscreen();
+            }
+        }
+
+        // Performance and settings functions
+        function updateFPS(value) {
+            targetFPS = parseInt(value);
+            document.getElementById('fpsValue').textContent = value;
+            
+            if (isConnected) {
+                updatePerformanceSettings();
+                const videoFeed = document.getElementById('videoFeed');
+                if (videoFeed.src) {
+                    const timestamp = Date.now();
+                    videoFeed.src = `/video_feed?t=${timestamp}&fps=${targetFPS}`;
+                }
+            }
+        }
+
+        function updateYoloConfidence(value) {
+            yoloConfidence = parseInt(value);
+            document.getElementById('confidenceValue').textContent = value + '%';
+            
+            if (isConnected) {
+                fetch('/update_settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ yolo_confidence: yoloConfidence / 100 })
+                });
+            }
+        }
+
+        function updateYoloInputSize(value) {
+            yoloInputSize = parseInt(value);
+            document.getElementById('yoloInputSize').textContent = value;
+            
+            if (isConnected) {
+                fetch('/update_settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ yolo_input_size: yoloInputSize })
+                });
+            }
+        }
+
+        function updateTrackingSensitivity(value) {
+            trackingSensitivity = parseInt(value);
+            document.getElementById('trackingSensitivityValue').textContent = value;
+            
+            if (isConnected) {
+                fetch('/update_settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ tracking_sensitivity: trackingSensitivity })
+                });
+            }
+        }
+
+        function updatePTZSpeed(value) {
+            ptzSpeed = parseFloat(value);
+            document.getElementById('ptzSpeedValue').textContent = value;
+            
+            if (isConnected) {
+                fetch('/update_settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ptz_speed: ptzSpeed })
+                });
+            }
+        }
+
+        function updateQualityMode(mode) {
+            const qualitySettings = {
+                'high': { fps: 25, confidence: 50, inputSize: 640 },
+                'balanced': { fps: 25, confidence: 40, inputSize: 320 },
+                'performance': { fps: 15, confidence: 30, inputSize: 320 },
+                'auto': { fps: 25, confidence: 40, inputSize: 320 }
+            };
+            
+            if (mode !== 'auto' && qualitySettings[mode]) {
+                const settings = qualitySettings[mode];
+                document.getElementById('fpsSlider').value = settings.fps;
+                document.getElementById('confidenceSlider').value = settings.confidence;
+                document.getElementById('inputSizeSelect').value = settings.inputSize;
+                
+                updateFPS(settings.fps);
+                updateYoloConfidence(settings.confidence);
+                updateYoloInputSize(settings.inputSize);
+            }
+        }
+
+        function updatePerformanceSettings() {
+            if (isConnected) {
+                const settings = {
+                    target_fps: targetFPS,
+                    yolo_confidence: yoloConfidence / 100,
+                    yolo_input_size: yoloInputSize,
+                    tracking_sensitivity: trackingSensitivity,
+                    ptz_speed: ptzSpeed
+                };
+                
+                fetch('/update_settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(settings)
+                });
+            }
+        }
+
+        // Toggle functions
+        async function toggleTracking() {
+            try {
+                const response = await fetch('/toggle_tracking', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    trackingEnabled = result.tracking_enabled;
+                    updateTrackingStatus();
+                    showMessage('Tracking ' + (trackingEnabled ? 'enabled' : 'disabled'), 'success');
+                }
+            } catch (error) {
+                showMessage('Toggle tracking error', 'error');
+            }
+        }
+
+        async function toggleYOLO() {
+            try {
+                const response = await fetch('/toggle_yolo', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    yoloEnabled = result.yolo_enabled;
+                    updateYOLOStatus();
+                    showMessage('YOLOv8 ' + (yoloEnabled ? 'enabled' : 'disabled'), 'success');
+                } else {
+                    showMessage(result.message || 'YOLOv8 not available', 'error');
+                }
+            } catch (error) {
+                showMessage('Toggle YOLOv8 error', 'error');
+            }
+        }
+
+        // PTZ functions
+        async function movePTZ(pan, tilt, zoom) {
+            if (!isConnected || !ptzAvailable) {
+                showMessage('PTZ not available', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/ptz_move', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pan, tilt, zoom })
+                });
+
+                const result = await response.json();
+                if (!result.success) {
+                    showMessage('PTZ move failed', 'error');
+                }
+            } catch (error) {
+                showMessage('PTZ error', 'error');
+            }
+        }
+
+        // Status update functions
+        function updateConnectionStatus(connected) {
+            const statusElement = document.getElementById('connectionStatus');
+            const statusIndicator = statusElement.querySelector('.status-indicator');
+            const statusText = document.getElementById('connectionText');
+            
+            if (connected) {
+                statusIndicator.className = 'status-indicator status-connected';
+                statusText.textContent = 'Connected (Multi-Source Ready)';
+            } else {
+                statusIndicator.className = 'status-indicator status-disconnected';
+                statusText.textContent = 'Disconnected';
+            }
+        }
+
+        function updateTrackingStatus() {
+            const toggle = document.getElementById('trackingToggle');
+            if (trackingEnabled) {
+                toggle.classList.add('active');
+            } else {
+                toggle.classList.remove('active');
+            }
+        }
+
+        function updateYOLOStatus() {
+            const toggle = document.getElementById('yoloToggle');
+            if (yoloEnabled) {
+                toggle.classList.add('active');
+            } else {
+                toggle.classList.remove('active');
+            }
+        }
+
+        function enablePTZControls() {
+            const ptzButtons = document.querySelectorAll('.ptz-btn');
+            ptzButtons.forEach(btn => {
+                if (ptzAvailable && isConnected) {
+                    btn.classList.remove('disabled');
+                } else {
+                    btn.classList.add('disabled');
+                }
+            });
+        }
+
+        function showMessage(message, type) {
+            const messageDiv = document.getElementById('connectionMessage');
+            messageDiv.innerHTML = `<div class="message ${type}-message">${message}</div>`;
+            
+            if (type === 'success') {
+                setTimeout(() => {
+                    messageDiv.innerHTML = '';
+                }, 5000);
+            }
+        }
+
+        // Video streaming
+        function startVideoStream() {
+            const videoFeed = document.getElementById('videoFeed');
+            const noVideo = document.getElementById('noVideo');
+            
+            const timestamp = Date.now();
+            videoFeed.src = `/video_feed?t=${timestamp}&fps=${targetFPS}`;
+            videoFeed.style.display = 'block';
+            noVideo.style.display = 'none';
+            
+            videoFeed.style.objectFit = currentVideoMode;
+        }
+
+        // Enhanced status monitoring dengan file timing info
+        async function checkStatus() {
+            try {
+                const response = await fetch('/status');
+                const status = await response.json();
+                
+                isConnected = status.connected;
+                trackingEnabled = status.tracking_enabled;
+                ptzAvailable = status.ptz_available;
+                yoloEnabled = status.yolo_enabled;
+                
+                updateConnectionStatus(isConnected);
+                updateTrackingStatus();
+                updateYOLOStatus();
+                enablePTZControls();
+                
+                // Update status displays
+                document.getElementById('streamingStatus').textContent = status.streaming ? '✅' : '❌';
+                document.getElementById('ptzStatus').textContent = ptzAvailable ? '✅' : '❌';
+                document.getElementById('personCount').textContent = status.person_count || 0;
+                document.getElementById('onvifStatus').textContent = status.onvif_status || 'Not available';
+                
+                // Update YOLOv8 info
+                if (status.yolo_device) {
+                    document.getElementById('yoloDevice').textContent = status.yolo_device.toUpperCase();
+                    document.getElementById('headerYoloDevice').textContent = status.yolo_device.toUpperCase();
+                }
+                
+                if (status.yolo_model_name && status.yolo_model_name !== 'Not Available') {
+                    document.getElementById('yoloModel').textContent = status.yolo_model_name.split('.')[0].toUpperCase();
+                    document.getElementById('headerYoloModel').textContent = yoloEnabled ? 'Active' : 'Ready';
+                } else {
+                    document.getElementById('yoloModel').textContent = 'N/A';
+                    document.getElementById('headerYoloModel').textContent = 'Not Available';
+                }
+                
+                // Update performance displays
+                if (status.fps !== undefined) {
+                    document.getElementById('currentFps').textContent = status.fps;
+                    document.getElementById('headerFps').textContent = status.fps;
+                }
+                
+                if (status.quality !== undefined) {
+                    document.getElementById('currentQuality').textContent = status.quality + '%';
+                    document.getElementById('headerQuality').textContent = status.quality;
+                }
+                
+                // Enhanced source type display dengan timing info
+                if (status.source_type) {
+                    document.getElementById('currentSource').textContent = status.source_type;
+                    let headerSourceText = status.source_type;
+                    
+                    if (status.is_live_stream) {
+                        headerSourceText += ' 🔴LIVE';
+                        isLiveStream = true;
+                        isFileWithTiming = false;
+                        showLiveStreamUI(true);
+                        showFileTimingUI(false);
+                    } else if (status.preserve_timing && status.source_type === 'file') {
+                        headerSourceText += ' ⏱️ORIG';
+                        isLiveStream = false;
+                        isFileWithTiming = true;
+                        showLiveStreamUI(false);
+                        showFileTimingUI(true);
+                    } else {
+                        isLiveStream = false;
+                        isFileWithTiming = false;
+                        showLiveStreamUI(false);
+                        showFileTimingUI(false);
+                    }
+                    
+                    document.getElementById('headerSource').textContent = headerSourceText;
+                }
+                
+                // Update timing info untuk semua mode
+                if (status.original_fps) {
+                    document.getElementById('originalFps').textContent = status.original_fps.toFixed(1);
+                    document.getElementById('sourceFps').textContent = status.original_fps.toFixed(1);
+                    document.getElementById('fileOriginalFps').textContent = status.original_fps.toFixed(1);
+                }
+                
+                // Update mode specific status
+                if (isLiveStream) {
+                    const timingMode = status.preserve_timing ? 'Preserved' : 'Optimized';
+                    document.getElementById('timingMode').textContent = timingMode;
+                    document.getElementById('liveStreamStatus').textContent = 'Active';
+                } else if (isFileWithTiming) {
+                    document.getElementById('fileTimingMode').textContent = 'Original';
+                }
+                
+                // Update load indicator
+                const load = status.fps < targetFPS * 0.7 ? 'High' : status.fps < targetFPS * 0.9 ? 'Medium' : 'Low';
+                document.getElementById('headerLoad').textContent = load;
+                
+                // Update button visibility
+                const connectBtn = document.getElementById('connectBtn');
+                const disconnectBtn = document.getElementById('disconnectBtn');
+                
+                if (isConnected) {
+                    connectBtn.style.display = 'none';
+                    disconnectBtn.style.display = 'block';
+                } else {
+                    connectBtn.style.display = 'block';
+                    disconnectBtn.style.display = 'none';
+                }
+                
+            } catch (error) {
+                console.error('Status check error:', error);
+            }
+        }
+
+        function startStatusUpdates() {
+            if (statusInterval) {
+                clearInterval(statusInterval);
+            }
+            
+            setTimeout(() => checkStatus(), 100);
+            statusInterval = setInterval(() => checkStatus(), 2000);
+        }
+
+        function stopStatusUpdates() {
+            if (statusInterval) {
+                clearInterval(statusInterval);
+                statusInterval = null;
+            }
+        }
+
+        // Disconnect function
+        async function forceDisconnect() {
+            const connectBtn = document.getElementById('connectBtn');
+            const disconnectBtn = document.getElementById('disconnectBtn');
+            
+            disconnectBtn.disabled = true;
+            disconnectBtn.textContent = 'Disconnecting...';
+            
+            try {
+                const response = await fetch('/disconnect', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showMessage('Successfully disconnected: ' + result.message, 'success');
+                } else {
+                    showMessage('Disconnect warning: ' + result.message, 'error');
+                }
+                
+            } catch (error) {
+                showMessage('Disconnect error: ' + error.message, 'error');
+            }
+            
+            // Reset UI
+            isConnected = false;
+            isLiveStream = false;
+            isFileWithTiming = false;
+            updateConnectionStatus(false);
+            showLiveStreamUI(false);
+            showFileTimingUI(false);
+            
+            const videoFeed = document.getElementById('videoFeed');
+            const noVideo = document.getElementById('noVideo');
+            
+            videoFeed.src = '';
+            videoFeed.style.display = 'none';
+            noVideo.style.display = 'block';
+            noVideo.textContent = '📹 Select a video source to start YOLOv8 AI streaming with original timing preservation';
+            
+            connectBtn.style.display = 'block';
+            connectBtn.disabled = false;
+            connectBtn.textContent = '🚀 Connect to Source';
+            
+            disconnectBtn.style.display = 'none';
+            disconnectBtn.disabled = false;
+            disconnectBtn.textContent = 'Force Disconnect';
+            
+            // Reset indicators
+            document.getElementById('currentSource').textContent = 'None';
+            document.getElementById('headerSource').textContent = 'None';
+            
+            stopStatusUpdates();
+        }
+
+        // Initialize on page load dengan enhanced timing support
+        document.addEventListener('DOMContentLoaded', function() {
+            setVideoMode('cover');
+            
+            // Set initial values
+            document.getElementById('fpsSlider').value = 25;
+            document.getElementById('fpsValue').textContent = '25';
+            document.getElementById('inputSizeSelect').value = yoloInputSize;
+            document.getElementById('confidenceSlider').value = yoloConfidence;
+            document.getElementById('confidenceValue').textContent = yoloConfidence + '%';
+            document.getElementById('yoloInputSize').textContent = yoloInputSize;
+            document.getElementById('trackingSensitivitySlider').value = trackingSensitivity;
+            document.getElementById('trackingSensitivityValue').textContent = trackingSensitivity;
+            document.getElementById('ptzSpeedSlider').value = ptzSpeed;
+            document.getElementById('ptzSpeedValue').textContent = ptzSpeed.toFixed(1);
+            
+            // Setup enhanced file URL handling
+            setupFileUrlHandler();
+            
+            // Set default values for file timing
+            const preserveFileTimingCheckbox = document.getElementById('preserveFileTiming');
+            if (preserveFileTimingCheckbox) {
+                preserveFileTimingCheckbox.checked = true; // Default to preserve timing
+            }
+            
+            // Setup stream URL live detection
+            const streamUrlInput = document.getElementById('streamUrl');
+            if (streamUrlInput) {
+                streamUrlInput.addEventListener('input', function() {
+                    const url = this.value.toLowerCase();
+                    const isLikelyLive = url.includes('live') || 
+                                       url.includes('.m3u8') || 
+                                       url.includes('youtube.com/watch') || 
+                                       url.includes('twitch.tv') ||
+                                       url.includes('facebook.com') ||
+                                       url.includes('instagram.com');
+                    
+                    if (isLikelyLive) {
+                        const preserveTiming = document.getElementById('preserveTiming');
+                        if (preserveTiming) preserveTiming.checked = true;
+                    }
+                });
+            }
+            
+            startStatusUpdates();
+            
+            console.log('🚀 Multi-Source CCTV System Initialized');
+            console.log('📡 Supported sources: RTSP/IP, Webcam, Live Streams, Files');
+            console.log('🔴 Live Stream Support Initialized');
+            console.log('📁 File Timing Support Initialized');
+            console.log('📺 Supported: YouTube Live, Twitch, HLS, Facebook Live, Instagram Live');
+            console.log('⚡ Original timing preservation enabled for all sources');
+            console.log('🎯 Fixed file playback speed issues');
+        });
+
+        // Enhanced error handling for video feed
+        window.addEventListener('load', function() {
+            const videoFeed = document.getElementById('videoFeed');
+            
+            videoFeed.addEventListener('error', function() {
+                console.warn('Video feed error detected');
+                if (isConnected) {
+                    showMessage('Video feed error - attempting to reconnect', 'error');
+                }
+            });
+            
+            videoFeed.addEventListener('abort', function() {
+                console.log('Video feed aborted');
+                if (!isConnected) {
+                    videoFeed.style.display = 'none';
+                    document.getElementById('noVideo').style.display = 'block';
+                    document.getElementById('noVideo').textContent = '📹 Select a video source to start YOLOv8 AI streaming with original timing preservation';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
