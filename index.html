@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multi-Source CCTV System - YOLOv8 AI with Toggleable Detection Overlay</title>
+    <title>Multi-Source CCTV System - AI with Toggleable Detection Overlay</title>
     <style>
         * {
             margin: 0;
@@ -724,7 +724,7 @@
     <div class="container">
         <div class="header">
             <h1>🚀 Multi-Source CCTV System</h1>
-            <p class="subtitle">YOLOv8 AI Detection • RTSP • Webcam • Live Streams • Fixed File Timing • Toggleable Detection Overlay</p>
+            <p class="subtitle">AI Detection • RTSP • Webcam • Live Streams • Fixed File Timing • Toggleable Detection Overlay • Universal .pt Model Support</p>
             <div class="performance-indicator">
                 ⚡ FPS: <span id="headerFps">--</span> | Quality: <span id="headerQuality">--</span>% | Load: <span id="headerLoad">Low</span> | Source: <span id="headerSource">None</span>
                 <!-- Live Stream Indicator -->
@@ -733,7 +733,7 @@
                 <span id="fileIndicator" class="file-indicator">⏱️ ORIG</span>
             </div>
             <div class="yolo-status-header" id="yoloHeaderStatus">
-                🤖 YOLOv8: <span id="headerYoloModel">Checking...</span> | Device: <span id="headerYoloDevice">--</span>
+                🤖 YOLO: <span id="headerYoloModel">Checking...</span> | Device: <span id="headerYoloDevice">--</span>
             </div>
             <!-- Live Stream Info Panel -->
             <div id="liveStreamInfo" class="live-stream-info">
@@ -752,7 +752,7 @@
                     </div>
                     <img id="videoFeed" style="display: none;" alt="Video Feed">
                     <div id="noVideo" class="no-video">
-                        📹 Select a video source to start YOLOv8 AI streaming with toggleable detection overlay
+                        📹 Select a video source to start AI streaming with toggleable detection overlay
                     </div>
                 </div>
             </div>
@@ -1027,9 +1027,9 @@
                     </div>
                 </div>
 
-                <!-- YOLOv8 AI Controls -->
+                <!-- AI Controls -->
                 <div class="control-section">
-                    <h3>🤖 YOLOv8 AI Detection</h3>
+                    <h3>🤖 AI Detection</h3>
                     
                     <div class="yolo-toggle">
                         <span>🤖 AI Detection:</span>
@@ -1060,6 +1060,16 @@
                                 <option value="416">416x416 (Balanced)</option>
                                 <option value="640">640x640 (Accurate)</option>
                             </select>
+                        </div>
+                        
+                        <!-- Model Support Info -->
+                        <div class="source-info" style="margin-top: 12px;">
+                            🤖 <strong>Universal Model Support:</strong><br>
+                            • Official YOLO models (yolo11n.pt, yolov8n.pt, yolov5n.pt, etc.)<br>
+                            • Custom trained models (my_model.pt, best.pt, etc.)<br>
+                            • Auto-detection with smart priority system<br>
+                            • Place any .pt file in ./models/ or current directory<br>
+                            • ⚡ <strong>Automatically selects best available model</strong>
                         </div>
                     </div>
                     
@@ -1805,12 +1815,12 @@
                 if (result.success) {
                     yoloEnabled = result.yolo_enabled;
                     updateYOLOStatus();
-                    showMessage('YOLOv8 ' + (yoloEnabled ? 'enabled' : 'disabled'), 'success');
+                    showMessage('' + (yoloEnabled ? 'enabled' : 'disabled'), 'success');
                 } else {
-                    showMessage(result.message || 'YOLOv8 not available', 'error');
+                    showMessage(result.message || 'not available', 'error');
                 }
             } catch (error) {
-                showMessage('Toggle YOLOv8 error', 'error');
+                showMessage('Toggle error', 'error');
             }
         }
 
@@ -1978,7 +1988,7 @@
                     }
                 }
                 
-                // Update YOLOv8 info
+                // Update info
                 if (status.yolo_device) {
                     document.getElementById('yoloDevice').textContent = status.yolo_device.toUpperCase();
                     document.getElementById('headerYoloDevice').textContent = status.yolo_device.toUpperCase();
@@ -2125,7 +2135,7 @@
             videoFeed.src = '';
             videoFeed.style.display = 'none';
             noVideo.style.display = 'block';
-            noVideo.textContent = '📹 Select a video source to start YOLOv8 AI streaming with toggleable detection overlay';
+            noVideo.textContent = '📹 Select a video source to start AI streaming with toggleable detection overlay';
             
             connectBtn.style.display = 'block';
             connectBtn.disabled = false;
@@ -2196,10 +2206,12 @@
             console.log('🔴 Live Stream Support Initialized');
             console.log('📁 File Timing Support Initialized');
             console.log('🔲 Detection Overlay Toggle Initialized');
+            console.log('🤖 Universal .pt Model Support Initialized');
             console.log('📺 Supported: YouTube Live, Twitch, HLS, Facebook Live, Instagram Live');
             console.log('⚡ Original timing preservation enabled for all sources');
             console.log('🎯 Fixed file playback speed issues');
             console.log('👁️ Detection boxes can now be hidden while keeping tracking active');
+            console.log('📦 AI Models: Official YOLO + Custom .pt files with smart detection');
         });
 
         // Enhanced error handling for video feed
@@ -2218,7 +2230,7 @@
                 if (!isConnected) {
                     videoFeed.style.display = 'none';
                     document.getElementById('noVideo').style.display = 'block';
-                    document.getElementById('noVideo').textContent = '📹 Select a video source to start YOLOv8 AI streaming with toggleable detection overlay';
+                    document.getElementById('noVideo').textContent = '📹 Select a video source to start AI streaming with toggleable detection overlay';
                 }
             });
         });
