@@ -2,7 +2,7 @@
 """
 Enhanced Multi-Source CCTV System Backend with Ultra Low-Latency Streaming
 Universal .pt Model Detection System with Smart Priority
-Supports: RTSP/ONVIF, Webcams, Live Streams, Files - All with YOLOv8 AI Detection
+Supports: RTSP/ONVIF, Webcams, Live Streams, Files - All with YOLO AI Detection
 Enhanced with Live Stream Original Timing Preservation & Fixed File Timing
 Added Toggleable Detection Overlay Feature
 Requires: opencv-python, flask, flask-socketio, onvif-zeep, numpy, ultralytics, yt-dlp
@@ -41,8 +41,8 @@ def signal_handler(signum, frame):
 # Set up signal handler BEFORE any heavy imports
 signal.signal(signal.SIGINT, signal_handler)
 
-# Enhanced YOLOv8 imports with better timeout protection and fallback
-print("🔄 Loading YOLOv8 dependencies...")
+# Enhanced YOLO imports with better timeout protection and fallback
+print("🔄 Loading YOLO dependencies...")
 YOLO_AVAILABLE = False
 try:
     # First, try a quick import test
@@ -80,14 +80,14 @@ try:
         thread.join(timeout=15)  # 15 second timeout
         
         if thread.is_alive():
-            print("⚠️  YOLOv8 import timeout - continuing without YOLO")
+            print("⚠️  YOLO import timeout - continuing without YOLO")
             YOLO_AVAILABLE = False
         elif result_container['success']:
             YOLO = result_container['YOLO']
             YOLO_AVAILABLE = True
-            print("✅ YOLOv8 (ultralytics) loaded successfully")
+            print("✅ YOLO (ultralytics) loaded successfully")
         else:
-            print("⚠️  YOLOv8 import failed - continuing without YOLO")
+            print("⚠️  YOLO import failed - continuing without YOLO")
             YOLO_AVAILABLE = False
             
 except ImportError:
@@ -95,7 +95,7 @@ except ImportError:
     print("⚠️  Warning: ultralytics not installed. Install with: pip install ultralytics")
 except Exception as e:
     YOLO_AVAILABLE = False
-    print(f"⚠️  YOLOv8 import error: {e}")
+    print(f"⚠️  YOLO import error: {e}")
 
 # Optional yt-dlp for enhanced streaming support
 try:
@@ -210,7 +210,7 @@ class MultiSourceCCTV:
         # Threading optimizations
         self.thread_pool = ThreadPoolExecutor(max_workers=3, thread_name_prefix="CCTV")
         
-        # Enhanced YOLOv8 Configuration
+        # Enhanced YOLO Configuration
         self.yolo_model = None
         self.yolo_model_path = None
         self.yolo_model_name = None
@@ -220,12 +220,12 @@ class MultiSourceCCTV:
         self.yolo_input_size = 320
         self.yolo_device = 'cpu'
         
-        # YOLOv8 Dynamic Settings Lock
+        # YOLO Dynamic Settings Lock
         self.yolo_settings_lock = threading.Lock()
         self.yolo_model_needs_reload = False
         
-        # Enhanced YOLOv8 Setup with better error handling
-        print("🤖 Setting up YOLOv8...")
+        # Enhanced YOLO Setup with better error handling
+        print("🤖 Setting up YOLO...")
         self.yolo_ready = self.setup_yolov8_enhanced()
         
         # Tracking parameters
@@ -490,13 +490,13 @@ class MultiSourceCCTV:
             return 'cpu'
     
     def setup_yolov8_enhanced(self):
-        """Enhanced YOLOv8 initialization with support for any .pt file"""
+        """Enhanced YOLO initialization with support for any .pt file"""
         if not YOLO_AVAILABLE:
-            logger.warning("YOLOv8 not available. Using motion detection only.")
+            logger.warning("YOLO not available. Using motion detection only.")
             return False
             
         try:
-            logger.info("🤖 Setting up YOLOv8 with enhanced .pt file detection...")
+            logger.info("🤖 Setting up YOLO with enhanced .pt file detection...")
             
             # Find available models dengan sistem prioritas
             logger.info("🔍 Searching for YOLO models (official and custom .pt files)...")
@@ -564,7 +564,7 @@ class MultiSourceCCTV:
             load_thread_obj.join(timeout=30)  # 30 second timeout for model loading
             
             if load_thread_obj.is_alive():
-                logger.error("⚠️ Model loading timeout - YOLOv8 initialization failed")
+                logger.error("⚠️ Model loading timeout - YOLO initialization failed")
                 return False
             
             if result_container['model'] is None:
@@ -631,7 +631,7 @@ class MultiSourceCCTV:
             
             # Enhanced success logging
             model_type = "Official YOLO" if selected_model.get('is_official', False) else "Custom .pt"
-            logger.info(f"✅ YOLOv8 initialized successfully!")
+            logger.info(f"✅ YOLO initialized successfully!")
             logger.info(f"   📁 Model: {self.yolo_model_name} ({model_type})")
             logger.info(f"   🖥️ Device: {self.yolo_device}")
             logger.info(f"   📏 Input size: {self.yolo_input_size}x{self.yolo_input_size}")
@@ -643,7 +643,7 @@ class MultiSourceCCTV:
             return True
             
         except Exception as e:
-            logger.error(f"❌ YOLOv8 initialization failed: {e}")
+            logger.error(f"❌ YOLO initialization failed: {e}")
             return False
     
     def detect_stream_type_and_timing(self, url, stream_type):
@@ -1387,7 +1387,7 @@ class MultiSourceCCTV:
                 # Process detection - PENTING: detection akan modify frame dengan bounding boxes
                 if self.yolo_ready and self.yolo_enabled:
                     processed_frame, persons = self.detect_persons_yolov8_optimized(detection_frame)
-                    logger.debug(f"🤖 YOLOv8 processed frame with {len(persons)} persons")
+                    logger.debug(f"🤖 YOLO processed frame with {len(persons)} persons")
                 else:
                     processed_frame, persons = self.detect_motion_optimized(detection_frame)
                     logger.debug(f"👁️ Motion detection processed frame with {len(persons)} detections")
@@ -1413,7 +1413,7 @@ class MultiSourceCCTV:
         logger.info("Detection thread stopped")
     
     def detect_persons_yolov8_optimized(self, frame):
-        """Enhanced YOLOv8 detection supporting any .pt model with comprehensive object classes"""
+        """Enhanced YOLO detection supporting any .pt model with comprehensive object classes"""
         try:
             height, width = frame.shape[:2]
             
@@ -1422,7 +1422,7 @@ class MultiSourceCCTV:
                 current_confidence = self.yolo_confidence_threshold
             
             # Debug logging
-            logger.debug(f"🔍 YOLOv8 Detection - Frame: {width}x{height}, Confidence: {current_confidence}")
+            logger.debug(f"🔍 YOLO Detection - Frame: {width}x{height}, Confidence: {current_confidence}")
             
             # Resize frame for processing
             if width > current_input_size:
@@ -1434,7 +1434,7 @@ class MultiSourceCCTV:
                 resized_frame = frame
                 scale = 1.0
             
-            # Enhanced YOLOv8 inference with error handling
+            # Enhanced YOLO inference with error handling
             try:
                 results = self.yolo_model.predict(
                     resized_frame,
@@ -1445,9 +1445,9 @@ class MultiSourceCCTV:
                     verbose=False,
                     imgsz=current_input_size
                 )
-                logger.debug(f"🤖 YOLOv8 inference completed, results: {len(results) if results else 0}")
+                logger.debug(f"🤖 YOLO inference completed, results: {len(results) if results else 0}")
             except Exception as inference_error:
-                logger.error(f"YOLOv8 inference error: {inference_error}")
+                logger.error(f"YOLO inference error: {inference_error}")
                 return frame, []
             
             # Enhanced class names - Support for standard YOLO classes and custom models
@@ -1556,7 +1556,7 @@ class MultiSourceCCTV:
                 else:
                     logger.debug("❌ No boxes found in result")
             else:
-                logger.debug("❌ No results from YOLOv8")
+                logger.debug("❌ No results from YOLO")
             
             # Update person count untuk tracking (hanya person)
             self.person_count = len(persons)
@@ -1565,7 +1565,7 @@ class MultiSourceCCTV:
             return frame, persons
             
         except Exception as e:
-            logger.error(f"YOLOv8 detection error: {e}")
+            logger.error(f"YOLO detection error: {e}")
             return frame, []
     
     def detect_motion_optimized(self, frame):
@@ -1681,7 +1681,7 @@ class MultiSourceCCTV:
         with self.detection_lock:
             detection_person_count = self.person_count
             if self.detection_enabled:
-                detection_method = 'YOLOv8' if (self.yolo_ready and self.yolo_enabled) else 'Motion'
+                detection_method = 'YOLO' if (self.yolo_ready and self.yolo_enabled) else 'Motion'
         
         with self.yolo_settings_lock:
             current_input_size = self.yolo_input_size
@@ -2044,25 +2044,25 @@ class MultiSourceCCTV:
             self.performance_stats['last_stats_time'] = current_time
     
     def update_yolo_settings(self, confidence=None, input_size=None):
-        """Update YOLOv8 detection settings"""
+        """Update YOLO detection settings"""
         settings_changed = False
         
         with self.yolo_settings_lock:
             if confidence is not None:
                 old_confidence = self.yolo_confidence_threshold
                 self.yolo_confidence_threshold = float(confidence)
-                logger.info(f"✅ YOLOv8 confidence updated: {old_confidence:.2f} → {confidence:.2f}")
+                logger.info(f"✅ YOLO confidence updated: {old_confidence:.2f} → {confidence:.2f}")
                 settings_changed = True
             
             if input_size is not None:
                 old_input_size = self.yolo_input_size
                 self.yolo_input_size = int(input_size)
-                logger.info(f"✅ YOLOv8 input size updated: {old_input_size}x{old_input_size} → {input_size}x{input_size}")
+                logger.info(f"✅ YOLO input size updated: {old_input_size}x{old_input_size} → {input_size}x{input_size}")
                 settings_changed = True
                 
                 if self.yolo_model is not None and self.yolo_ready:
                     try:
-                        logger.info(f"🔥 Re-warming YOLOv8 model with new input size: {input_size}x{input_size}")
+                        logger.info(f"🔥 Re-warming YOLO model with new input size: {input_size}x{input_size}")
                         dummy_image = np.zeros((self.yolo_input_size, self.yolo_input_size, 3), dtype=np.uint8)
                         self.yolo_model.predict(
                             dummy_image, 
@@ -2101,11 +2101,11 @@ try:
     print("🚀 Creating Multi-Source CCTV system instance...")
     cctv_system = MultiSourceCCTV()
     if cctv_system.yolo_ready:
-        print("✅ YOLOv8 AI Detection: READY")
+        print("✅ YOLO AI Detection: READY")
         print(f"   📦 Model: {cctv_system.yolo_model_name}")
         print(f"   🖥️ Device: {cctv_system.yolo_device}")
     else:
-        print("⚠️ YOLOv8 AI Detection: Using motion detection fallback")
+        print("⚠️ YOLO AI Detection: Using motion detection fallback")
         print("   💡 Place any .pt model file to enable AI detection")
 except KeyboardInterrupt:
     print("\n🛑 Multi-Source CCTV system initialization interrupted by user")
@@ -2138,9 +2138,9 @@ def index():
         return """
         <!DOCTYPE html>
         <html>
-        <head><title>Multi-Source CCTV System - YOLOv8</title></head>
+        <head><title>Multi-Source CCTV System - YOLO</title></head>
         <body>
-            <h1>Multi-Source CCTV System with YOLOv8</h1>
+            <h1>Multi-Source CCTV System with YOLO</h1>
             <p>Please ensure index.html is in the same directory as app.py</p>
         </body>
         </html>
@@ -2304,15 +2304,15 @@ def toggle_yolo():
     if not cctv_system.yolo_ready:
         return jsonify({
             'success': False, 
-            'message': 'YOLOv8 AI not available - ultralytics not installed or no .pt model found',
+            'message': 'YOLO AI not available - ultralytics not installed or no .pt model found',
             'yolo_enabled': False
         })
     
     cctv_system.yolo_enabled = not cctv_system.yolo_enabled
-    # PENTING: Aktifkan detection saat YOLOv8 diaktifkan
+    # PENTING: Aktifkan detection saat YOLO diaktifkan
     cctv_system.detection_enabled = cctv_system.yolo_enabled or cctv_system.motion_tracking
     
-    logger.info(f"YOLOv8 AI detection toggled: {cctv_system.yolo_enabled}")
+    logger.info(f"YOLO AI detection toggled: {cctv_system.yolo_enabled}")
     logger.info(f"Detection enabled: {cctv_system.detection_enabled}")
     
     return jsonify({
@@ -2328,7 +2328,7 @@ def status():
     
     detection_method = 'None'
     if cctv_system.detection_enabled:
-        detection_method = 'YOLOv8 AI Detection' if (cctv_system.yolo_ready and cctv_system.yolo_enabled) else 'Motion Detection'
+        detection_method = 'AI Detection' if (cctv_system.yolo_ready and cctv_system.yolo_enabled) else 'Motion Detection'
     
     onvif_status_text = 'Not Available'
     if cctv_system.onvif_cam:
@@ -2624,7 +2624,7 @@ if __name__ == '__main__':
     print("   • Source-specific optimizations ✅")
     print("   • Enhanced error handling per source type ✅")
     print("   • File timing preservation controls ✅")
-    print("   • Fixed YOLOv8 import timeout issues ✅")
+    print("   • Fixed YOLO import timeout issues ✅")
     print("   • Toggleable detection overlay (hide/show bounding boxes) ✅")
     
     if YT_DLP_AVAILABLE:
@@ -2632,13 +2632,13 @@ if __name__ == '__main__':
     else:
         print("   • yt-dlp integration: Install with 'pip install yt-dlp' ⚠️")
     
-    print("\n🤖 YOLOv8 AI DETECTION (All Sources):")
+    print("\n🤖 YOLO AI DETECTION (All Sources):")
     if YOLO_AVAILABLE:
         yolo_info = cctv_system.get_yolo_model_info()
         print(f"   • Model: {yolo_info['model_name']} ✅")
         print(f"   • Device: {yolo_info['device']} ✅")
         print(f"   • Input Size: {yolo_info['input_size']} (Dynamic) ✅")
-        print(f"   • Auto-detects official YOLO models (yolo11n.pt, yolov8n.pt, etc.) ✅")
+        print(f"   • Auto-detects official YOLO models (yolo11n.pt, yolov8n.pt, yolov5n.pt, etc.) ✅")
         print(f"   • Supports ANY .pt file (custom models, fine-tuned, etc.) ✅")
         print(f"   • Smart model selection with priority system ✅")
         print(f"   • Real-time object detection on any source ✅")
@@ -2713,7 +2713,7 @@ if __name__ == '__main__':
         print("   • Original playback speed for all file types ✅")
         print("   • Auto-detection File vs Live Stream URLs ✅")
         print("   • Fixed fast playback issue ✅")
-        print("   • Enhanced YOLOv8 import handling ✅")
+        print("   • Enhanced YOLO import handling ✅")
         print("🔲 Detection Overlay Toggle: ENABLED")
         print("   • Hide/show bounding boxes while keeping detection active ✅")
         print("   • Independent control for clean video view ✅")
