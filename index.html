@@ -340,6 +340,19 @@
             color: #4CAF50;
         }
 
+        /* RTSP Template Styling */
+        .template-btn.rtsp-template {
+            background: rgba(76, 175, 80, 0.1);
+            border-color: #4CAF50;
+            color: #4CAF50;
+        }
+
+        .template-btn.rtsp-template:hover {
+            background: rgba(76, 175, 80, 0.2);
+            border-color: #66BB6A;
+            color: #66BB6A;
+        }
+
         /* Live Stream Template Styling */
         .template-btn.live-template {
             background: rgba(255, 68, 68, 0.1);
@@ -673,6 +686,37 @@
             color: #ff4444;
         }
 
+        /* RTSP parsed info styling */
+        .rtsp-parsed-info {
+            background: rgba(76, 175, 80, 0.1) !important;
+            border: 1px solid #4CAF50 !important;
+            color: #4CAF50 !important;
+            padding: 8px !important;
+            border-radius: 4px !important;
+            margin-bottom: 12px !important;
+            font-size: 11px !important;
+            line-height: 1.4 !important;
+        }
+
+        /* RTSP error message styling */
+        .rtsp-error-message {
+            background: rgba(244, 67, 54, 0.1) !important;
+            border: 1px solid #f44336 !important;
+            color: #f44336 !important;
+            padding: 8px !important;
+            border-radius: 4px !important;
+            margin-top: 8px !important;
+            font-size: 12px !important;
+            font-weight: 600 !important;
+            animation: errorPulse 2s ease-in-out infinite !important;
+        }
+
+        @keyframes errorPulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
         /* Responsive design */
         @media (max-width: 768px) {
             .main-grid {
@@ -724,7 +768,7 @@
     <div class="container">
         <div class="header">
             <h1>🚀 Multi-Source CCTV System</h1>
-            <p class="subtitle">AI Detection • RTSP • Webcam • Live Streams • Fixed File Timing • Toggleable Detection Overlay • Universal .pt Model Support</p>
+            <p class="subtitle">AI Detection • Enhanced RTSP • Webcam • Live Streams • Fixed File Timing • Toggleable Detection Overlay • Universal .pt Model Support</p>
             <div class="performance-indicator">
                 ⚡ FPS: <span id="headerFps">--</span> | Quality: <span id="headerQuality">--</span>% | Load: <span id="headerLoad">Low</span> | Source: <span id="headerSource">None</span>
                 <!-- Live Stream Indicator -->
@@ -779,34 +823,62 @@
                     </div>
 
                     <div id="currentSourceIndicator" class="source-type-indicator">
-                        Current: RTSP/IP Camera with ONVIF
+                        Current: RTSP/IP Camera with Enhanced URL Support
                     </div>
 
                     <!-- RTSP/IP Camera Configuration -->
                     <div id="rtspConfig" class="source-config active">
+                        <div class="stream-templates">
+                            <div style="margin-bottom: 8px; font-size: 12px; color: #ccc;">RTSP URL Templates:</div>
+                            <button class="template-btn rtsp-template" onclick="setRtspTemplate('basic')">🔓 Basic RTSP</button>
+                            <button class="template-btn rtsp-template" onclick="setRtspTemplate('auth_full')">🔐 User:Pass</button>
+                            <button class="template-btn rtsp-template" onclick="setRtspTemplate('auth_user')">👤 User Only</button>
+                            <button class="template-btn rtsp-template" onclick="setRtspTemplate('hikvision')">📹 Hikvision</button>
+                            <button class="template-btn rtsp-template" onclick="setRtspTemplate('dahua')">📹 Dahua</button>
+                            <button class="template-btn rtsp-template" onclick="setRtspTemplate('axis')">📹 Axis</button>
+                        </div>
+                        
                         <div class="form-group">
-                            <label>RTSP URL:</label>
+                            <label>RTSP URL (supports all standard formats):</label>
                             <input type="text" id="rtspUrl" placeholder="rtsp://192.168.1.100:554/stream1">
+                            <div id="rtspErrorMessage" class="rtsp-error-message" style="display: none;">
+                                ❌ Wrong RTSP - Connection failed
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label>Camera IP (for PTZ/ONVIF):</label>
-                            <input type="text" id="cameraIp" placeholder="192.168.1.100 (optional for PTZ)">
+                        
+                        <div id="rtspCredentialsSection">
+                            <div class="form-group">
+                                <label>Camera IP (for PTZ/ONVIF):</label>
+                                <input type="text" id="cameraIp" placeholder="192.168.1.100 (optional for PTZ)">
+                            </div>
+                            <div class="form-group">
+                                <label>ONVIF Port:</label>
+                                <input type="number" id="cameraPort" value="80" placeholder="80">
+                            </div>
+                            <div class="form-group">
+                                <label>Username (optional if not in URL):</label>
+                                <input type="text" id="username" placeholder="admin">
+                            </div>
+                            <div class="form-group">
+                                <label>Password (optional if not in URL):</label>
+                                <input type="password" id="password" placeholder="password">
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label>ONVIF Port:</label>
-                            <input type="number" id="cameraPort" value="80" placeholder="80">
+                        
+                        <div class="source-info">
+                            📹 <strong>Supported RTSP Formats:</strong><br>
+                            • <code>rtsp://192.168.1.4:554/live/ch00_0</code> (No auth)<br>
+                            • <code>rtsp://admin:@192.168.1.4:554/live/ch00_0</code> (User only)<br>
+                            • <code>rtsp://admin:admin@192.168.1.4:554/live/ch00_0</code> (Full auth)<br>
+                            • <code>rtsp://user:pass@ip:port/path</code> (Generic)<br>
+                            • Auto-detects credentials from URL<br>
+                            • Fallback to separate username/password fields
                         </div>
-                        <div class="form-group">
-                            <label>Username:</label>
-                            <input type="text" id="username" placeholder="Leave empty if not needed">
-                        </div>
-                        <div class="form-group">
-                            <label>Password:</label>
-                            <input type="password" id="password" placeholder="Leave empty if not needed">
-                        </div>
+                        
                         <div class="tips">
-                            💡 <strong>Smart Discovery:</strong> System will auto-detect ONVIF settings<br>
-                            🔓 No auth → 👤 Username only → 🔐 Full auth
+                            💡 <strong>Smart RTSP Parsing:</strong> System auto-detects credentials in URL<br>
+                            🔓 URL without auth → 👤 User in URL → 🔐 Full auth in URL<br>
+                            ⚡ <strong>Auto IP extraction</strong> for ONVIF PTZ control
                         </div>
                     </div>
 
@@ -1195,6 +1267,160 @@
         let originalFps = null;
         let isFileWithTiming = false;
 
+        // RTSP error message management
+        function showRtspError(message) {
+            const errorElement = document.getElementById('rtspErrorMessage');
+            if (errorElement) {
+                errorElement.textContent = `❌ ${message}`;
+                errorElement.style.display = 'block';
+                
+                // Auto-hide after 10 seconds
+                setTimeout(() => {
+                    hideRtspError();
+                }, 10000);
+            }
+        }
+
+        function hideRtspError() {
+            const errorElement = document.getElementById('rtspErrorMessage');
+            if (errorElement) {
+                errorElement.style.display = 'none';
+            }
+        }
+
+        // RTSP template management
+        function setRtspTemplate(type) {
+            const rtspUrl = document.getElementById('rtspUrl');
+            const cameraIp = document.getElementById('cameraIp');
+            const username = document.getElementById('username');
+            const password = document.getElementById('password');
+            
+            // Hide error message when using template
+            hideRtspError();
+            
+            const templates = {
+                'basic': {
+                    url: 'rtsp://192.168.1.100:554/stream1',
+                    ip: '192.168.1.100',
+                    user: '',
+                    pass: ''
+                },
+                'auth_full': {
+                    url: 'rtsp://admin:admin@192.168.1.100:554/stream1',
+                    ip: '192.168.1.100',
+                    user: '',
+                    pass: ''
+                },
+                'auth_user': {
+                    url: 'rtsp://admin:@192.168.1.100:554/stream1',
+                    ip: '192.168.1.100',
+                    user: '',
+                    pass: ''
+                },
+                'hikvision': {
+                    url: 'rtsp://admin:admin@192.168.1.100:554/Streaming/Channels/101',
+                    ip: '192.168.1.100',
+                    user: '',
+                    pass: ''
+                },
+                'dahua': {
+                    url: 'rtsp://admin:admin@192.168.1.100:554/cam/realmonitor?channel=1&subtype=0',
+                    ip: '192.168.1.100',
+                    user: '',
+                    pass: ''
+                },
+                'axis': {
+                    url: 'rtsp://admin:admin@192.168.1.100:554/axis-media/media.amp',
+                    ip: '192.168.1.100',
+                    user: '',
+                    pass: ''
+                }
+            };
+            
+            if (templates[type]) {
+                const template = templates[type];
+                rtspUrl.value = template.url;
+                cameraIp.value = template.ip;
+                username.value = template.user;
+                password.value = template.pass;
+                
+                // Auto-parse the URL to show extracted info
+                parseRtspUrl();
+            }
+        }
+
+        // Enhanced RTSP URL parsing
+        function parseRtspUrl() {
+            const rtspUrlInput = document.getElementById('rtspUrl');
+            const cameraIpInput = document.getElementById('cameraIp');
+            const usernameInput = document.getElementById('username');
+            const passwordInput = document.getElementById('password');
+            
+            const url = rtspUrlInput.value.trim();
+            
+            // Hide error message when user types new URL
+            hideRtspError();
+            
+            if (!url.startsWith('rtsp://')) {
+                return;
+            }
+            
+            try {
+                // Parse RTSP URL dengan regex untuk menangani semua format
+                const rtspRegex = /^rtsp:\/\/(?:([^:@]+)(?::([^@]*))?@)?([^:\/]+)(?::(\d+))?(.*)$/;
+                const match = url.match(rtspRegex);
+                
+                if (match) {
+                    const [, user, pass, host, port, path] = match;
+                    
+                    // Auto-extract IP untuk ONVIF jika belum diisi
+                    if (host && !cameraIpInput.value.trim()) {
+                        cameraIpInput.value = host;
+                    }
+                    
+                    // Show extracted credentials info
+                    const credentialsSection = document.getElementById('rtspCredentialsSection');
+                    const existingInfo = credentialsSection.querySelector('.rtsp-parsed-info');
+                    if (existingInfo) {
+                        existingInfo.remove();
+                    }
+                    
+                    if (user || pass) {
+                        const info = document.createElement('div');
+                        info.className = 'rtsp-parsed-info';
+                        info.style.cssText = `
+                            background: rgba(76, 175, 80, 0.1);
+                            border: 1px solid #4CAF50;
+                            color: #4CAF50;
+                            padding: 8px;
+                            border-radius: 4px;
+                            margin-bottom: 12px;
+                            font-size: 11px;
+                        `;
+                        
+                        let infoText = '✅ <strong>Credentials detected in URL:</strong><br>';
+                        if (user) infoText += `• Username: ${user}<br>`;
+                        if (pass) infoText += `• Password: ${pass ? '***' : '(empty)'}<br>`;
+                        infoText += '• Will use URL credentials (separate fields optional)';
+                        
+                        info.innerHTML = infoText;
+                        credentialsSection.insertBefore(info, credentialsSection.firstChild);
+                    }
+                }
+            } catch (error) {
+                console.log('RTSP URL parsing error:', error);
+            }
+        }
+
+        // Setup RTSP URL input handler
+        function setupRtspUrlHandler() {
+            const rtspUrlInput = document.getElementById('rtspUrl');
+            if (rtspUrlInput) {
+                rtspUrlInput.addEventListener('input', parseRtspUrl);
+                rtspUrlInput.addEventListener('blur', parseRtspUrl);
+            }
+        }
+
         // Enhanced URL type detection
         function detectUrlType(url) {
             const url_lower = url.toLowerCase();
@@ -1228,6 +1454,9 @@
         function selectSourceType(type) {
             currentSourceType = type;
             
+            // Hide RTSP error when changing source type
+            hideRtspError();
+            
             // Update UI
             document.querySelectorAll('.source-type-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('.source-config').forEach(config => config.classList.remove('active'));
@@ -1237,7 +1466,7 @@
             
             // Update indicator
             const indicators = {
-                'rtsp': 'RTSP/IP Camera with ONVIF',
+                'rtsp': 'RTSP/IP Camera with Enhanced URL Support',
                 'webcam': 'USB/Built-in Webcam',
                 'stream': 'Live Stream URL with Original Timing',
                 'file': 'Video File/URL with Timing Control'
@@ -1456,6 +1685,9 @@
             connectBtn.textContent = 'Connecting...';
             messageDiv.innerHTML = '';
             
+            // Hide any existing RTSP error message
+            hideRtspError();
+            
             let connectionData = {
                 source_type: currentSourceType
             };
@@ -1570,6 +1802,9 @@
                     isConnected = true;
                     showMessage(result.message, 'success');
                     
+                    // Hide RTSP error message on successful connection
+                    hideRtspError();
+                    
                     // Enhanced detection untuk berbagai mode
                     isLiveStream = result.is_live_stream || false;
                     preserveTiming = result.preserve_timing || false;
@@ -1614,9 +1849,19 @@
                     }
                 } else {
                     showMessage('Connection failed: ' + result.message, 'error');
+                    
+                    // Show RTSP specific error if it's RTSP source
+                    if (currentSourceType === 'rtsp') {
+                        showRtspError('Wrong RTSP - Connection failed');
+                    }
                 }
             } catch (error) {
                 showMessage('Connection error: ' + error.message, 'error');
+                
+                // Show RTSP specific error if it's RTSP source
+                if (currentSourceType === 'rtsp') {
+                    showRtspError('Wrong RTSP - Network error');
+                }
             } finally {
                 resetConnectButton();
             }
@@ -2101,6 +2346,9 @@
             disconnectBtn.disabled = true;
             disconnectBtn.textContent = 'Disconnecting...';
             
+            // Hide RTSP error message on disconnect
+            hideRtspError();
+            
             try {
                 const response = await fetch('/disconnect', {
                     method: 'POST',
@@ -2174,6 +2422,9 @@
             // Setup enhanced file URL handling
             setupFileUrlHandler();
             
+            // Setup RTSP URL parsing
+            setupRtspUrlHandler();
+            
             // Set default values for file timing
             const preserveFileTimingCheckbox = document.getElementById('preserveFileTiming');
             if (preserveFileTimingCheckbox) {
@@ -2202,16 +2453,18 @@
             startStatusUpdates();
             
             console.log('🚀 Multi-Source CCTV System Initialized');
-            console.log('📡 Supported sources: RTSP/IP, Webcam, Live Streams, Files');
+            console.log('📡 Supported sources: RTSP/IP (Enhanced), Webcam, Live Streams, Files');
             console.log('🔴 Live Stream Support Initialized');
             console.log('📁 File Timing Support Initialized');
             console.log('🔲 Detection Overlay Toggle Initialized');
             console.log('🤖 Universal .pt Model Support Initialized');
+            console.log('📹 Enhanced RTSP URL Support Initialized');
             console.log('📺 Supported: YouTube Live, Twitch, HLS, Facebook Live, Instagram Live');
             console.log('⚡ Original timing preservation enabled for all sources');
             console.log('🎯 Fixed file playback speed issues');
             console.log('👁️ Detection boxes can now be hidden while keeping tracking active');
             console.log('📦 AI Models: Official YOLO + Custom .pt files with smart detection');
+            console.log('🚨 RTSP connection error notifications enabled');
         });
 
         // Enhanced error handling for video feed
