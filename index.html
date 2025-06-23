@@ -2122,7 +2122,7 @@
                 if (result.success) {
                     trackingEnabled = result.tracking_enabled;
                     updateTrackingStatus();
-                    showMessage('Tracking ' + (trackingEnabled ? ' Track enabled' : 'Track disabled'), 'success');
+                    showMessage('Tracking ' + (trackingEnabled ? 'enabled' : 'disabled'), 'success');
                 }
             } catch (error) {
                 showMessage('Toggle tracking error', 'error');
