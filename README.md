@@ -66,24 +66,326 @@ A comprehensive, real-time video surveillance system that supports multiple vide
 
 ## 🛠️ Installation
 
-### Prerequisites
+### System Requirements
+- **Python**: 3.8 or higher
+- **RAM**: 4GB minimum, 8GB recommended
+- **Storage**: 2GB free space (for models and dependencies)
+- **Network**: Internet connection for model downloads
+
+### 🐧 Linux Installation
+
+#### Ubuntu/Debian
 ```bash
+# Update system packages
+sudo apt update && sudo apt upgrade -y
+
+# Install Python and pip
+sudo apt install python3 python3-pip python3-venv -y
+
+# Install system dependencies for OpenCV
+sudo apt install python3-opencv libopencv-dev -y
+sudo apt install libglib2.0-0 libsm6 libxext6 libxrender-dev libgomp1 -y
+
+# Install additional dependencies for video processing
+sudo apt install ffmpeg libavcodec-extra -y
+
+# Create virtual environment (recommended)
+python3 -m venv cctv_env
+source cctv_env/bin/activate
+
+# Install Python packages
+pip install --upgrade pip
+pip install opencv-python flask flask-socketio onvif-zeep numpy ultralytics yt-dlp
+
+# Optional: PyTorch with CUDA (for GPU acceleration)
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+```
+
+#### CentOS/RHEL/Fedora
+```bash
+# CentOS/RHEL
+sudo yum update -y
+sudo yum install python3 python3-pip python3-devel -y
+sudo yum install opencv opencv-python opencv-devel -y
+sudo yum install ffmpeg ffmpeg-devel -y
+
+# Fedora
+sudo dnf update -y
+sudo dnf install python3 python3-pip python3-devel -y
+sudo dnf install opencv opencv-python opencv-devel -y
+sudo dnf install ffmpeg ffmpeg-devel -y
+
+# Create virtual environment and install packages
+python3 -m venv cctv_env
+source cctv_env/bin/activate
+pip install --upgrade pip
 pip install opencv-python flask flask-socketio onvif-zeep numpy ultralytics yt-dlp
 ```
 
-### Optional Dependencies
-- **yt-dlp**: For YouTube/Twitch stream extraction
-- **PyTorch**: For GPU acceleration (CUDA support)
-
-### Quick Start
-1. Clone the repository
-2. Install dependencies
-3. Place YOLO models in `./models/` folder (optional - will auto-download)
-4. Run the application:
+#### Arch Linux
 ```bash
+# Update system
+sudo pacman -Syu
+
+# Install dependencies
+sudo pacman -S python python-pip python-virtualenv
+sudo pacman -S opencv python-opencv
+sudo pacman -S ffmpeg
+
+# Create virtual environment
+python -m venv cctv_env
+source cctv_env/bin/activate
+pip install opencv-python flask flask-socketio onvif-zeep numpy ultralytics yt-dlp
+```
+
+### 🪟 Windows Installation
+
+#### Method 1: Using pip (Recommended)
+```cmd
+# Download and install Python 3.8+ from python.org
+# Make sure to check "Add Python to PATH" during installation
+
+# Open Command Prompt or PowerShell as Administrator
+# Update pip
+python -m pip install --upgrade pip
+
+# Install Microsoft Visual C++ Build Tools (required for some packages)
+# Download from: https://visualstudio.microsoft.com/visual-cpp-build-tools/
+
+# Create virtual environment (recommended)
+python -m venv cctv_env
+cctv_env\Scripts\activate
+
+# Install core dependencies
+pip install opencv-python flask flask-socketio onvif-zeep numpy ultralytics yt-dlp
+
+# Optional: PyTorch with CUDA (for NVIDIA GPU)
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+```
+
+#### Method 2: Using Conda (Alternative)
+```cmd
+# Download and install Anaconda/Miniconda from anaconda.com
+
+# Create conda environment
+conda create -n cctv_env python=3.9 -y
+conda activate cctv_env
+
+# Install packages via conda-forge (better compatibility)
+conda install -c conda-forge opencv flask numpy -y
+conda install -c conda-forge ultralytics yt-dlp -y
+
+# Install remaining packages via pip
+pip install flask-socketio onvif-zeep
+```
+
+#### Windows-Specific Dependencies
+```cmd
+# For webcam support on Windows
+pip install pywin32
+
+# For better video codec support
+# Download and install K-Lite Codec Pack from codecguide.com
+
+# For ONVIF discovery (Windows firewall may block)
+# Allow Python through Windows Firewall when prompted
+```
+
+### 📋 Complete Dependencies List
+
+#### Core Requirements (requirements.txt)
+```txt
+opencv-python>=4.8.0
+flask>=2.3.0
+flask-socketio>=5.3.0
+onvif-zeep>=0.2.12
+numpy>=1.24.0
+ultralytics>=8.0.0
+yt-dlp>=2023.7.6
+pathlib>=1.0.1
+threading>=3.8.0
+```
+
+#### Optional Dependencies
+```txt
+# For GPU acceleration
+torch>=2.0.0
+torchvision>=0.15.0
+torchaudio>=2.0.0
+
+# For better video processing
+ffmpeg-python>=0.2.0
+
+# For advanced streaming
+streamlink>=5.5.0
+
+# For system monitoring
+psutil>=5.9.0
+
+# For configuration management
+pyyaml>=6.0
+```
+
+### 🔧 Installation Script
+
+#### Linux (install.sh)
+```bash
+#!/bin/bash
+echo "🚀 Installing Multi-Source CCTV System on Linux..."
+
+# Check Python version
+python_version=$(python3 -c 'import sys; print(".".join(map(str, sys.version_info[:2])))')
+echo "📍 Python version: $python_version"
+
+if [[ $(echo "$python_version < 3.8" | bc -l) -eq 1 ]]; then
+    echo "❌ Python 3.8+ required. Current: $python_version"
+    exit 1
+fi
+
+# Install system dependencies
+if command -v apt &> /dev/null; then
+    sudo apt update
+    sudo apt install -y python3-opencv libopencv-dev ffmpeg libavcodec-extra
+elif command -v yum &> /dev/null; then
+    sudo yum install -y opencv opencv-python opencv-devel ffmpeg ffmpeg-devel
+elif command -v dnf &> /dev/null; then
+    sudo dnf install -y opencv opencv-python opencv-devel ffmpeg ffmpeg-devel
+fi
+
+# Create virtual environment
+python3 -m venv cctv_env
+source cctv_env/bin/activate
+
+# Install Python packages
+pip install --upgrade pip
+pip install -r requirements.txt
+
+echo "✅ Installation completed!"
+echo "🚀 Run: source cctv_env/bin/activate && python app.py"
+```
+
+#### Windows (install.bat)
+```batch
+@echo off
+echo 🚀 Installing Multi-Source CCTV System on Windows...
+
+REM Check Python installation
+python --version >nul 2>&1
+if errorlevel 1 (
+    echo ❌ Python not found. Please install Python 3.8+ from python.org
+    pause
+    exit /b 1
+)
+
+REM Create virtual environment
+python -m venv cctv_env
+call cctv_env\Scripts\activate.bat
+
+REM Upgrade pip
+python -m pip install --upgrade pip
+
+REM Install requirements
+pip install -r requirements.txt
+
+echo ✅ Installation completed!
+echo 🚀 Run: cctv_env\Scripts\activate.bat && python app.py
+pause
+```
+
+### 🚀 Quick Start
+
+#### Linux
+```bash
+# Clone repository
+git clone https://github.com/your-repo/multi-source-cctv.git
+cd multi-source-cctv
+
+# Make install script executable
+chmod +x install.sh
+
+# Run installation
+./install.sh
+
+# Activate environment and start
+source cctv_env/bin/activate
 python app.py
 ```
-5. Open http://localhost:4000 in your browser
+
+#### Windows
+```cmd
+# Clone repository
+git clone https://github.com/your-repo/multi-source-cctv.git
+cd multi-source-cctv
+
+# Run installation
+install.bat
+
+# Activate environment and start
+cctv_env\Scripts\activate.bat
+python app.py
+```
+
+### 🔍 Verification
+
+#### Test Installation
+```bash
+# Activate environment
+source cctv_env/bin/activate  # Linux
+# OR
+cctv_env\Scripts\activate.bat  # Windows
+
+# Test imports
+python -c "import cv2; print('✅ OpenCV:', cv2.__version__)"
+python -c "import flask; print('✅ Flask:', flask.__version__)"
+python -c "import ultralytics; print('✅ Ultralytics available')"
+python -c "import yt_dlp; print('✅ yt-dlp available')"
+
+# Test YOLO model download
+python -c "from ultralytics import YOLO; model = YOLO('yolov8n.pt'); print('✅ YOLO model loaded')"
+```
+
+### 📦 Pre-built Releases
+
+For users who prefer not to install dependencies manually:
+
+#### Windows Executable (Coming Soon)
+- Standalone .exe file with all dependencies
+- No Python installation required
+- Portable version available
+
+#### Docker Container
+```bash
+# Pull Docker image
+docker pull multisource-cctv:latest
+
+# Run container
+docker run -p 4000:4000 -v /path/to/models:/app/models multisource-cctv:latest
+```
+
+### 🎯 Post-Installation Setup
+
+1. **Download YOLO Models** (Optional - auto-downloads on first use)
+```bash
+mkdir models
+cd models
+wget https://github.com/ultralytics/assets/releases/download/v8.2.0/yolov8n.pt
+wget https://github.com/ultralytics/assets/releases/download/v8.2.0/yolo11n.pt
+```
+
+2. **Configure Firewall** (Windows)
+- Allow Python through Windows Firewall
+- Open port 4000 for web interface
+- Allow ONVIF discovery (ports 80, 8080, 8899)
+
+3. **Test Camera Connection**
+- RTSP: Test with VLC player first
+- Webcam: Check with built-in camera app
+- Network: Verify camera accessibility
+
+4. **Access Web Interface**
+- Open browser to http://localhost:4000
+- Select video source and connect
+- Verify video stream and AI detection
 
 ## 📦 AI Model Support
 
