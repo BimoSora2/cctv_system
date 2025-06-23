@@ -2122,7 +2122,7 @@
                 if (result.success) {
                     trackingEnabled = result.tracking_enabled;
                     updateTrackingStatus();
-                    showMessage('Tracking ' + (trackingEnabled ? 'enabled' : 'disabled'), 'success');
+                    showMessage('Tracking ' + (trackingEnabled ? ' Track enabled' : 'Track disabled'), 'success');
                 }
             } catch (error) {
                 showMessage('Toggle tracking error', 'error');
@@ -2140,7 +2140,7 @@
                 if (result.success) {
                     yoloEnabled = result.yolo_enabled;
                     updateYOLOStatus();
-                    showMessage('' + (yoloEnabled ? 'enabled' : 'disabled'), 'success');
+                    showMessage('' + (yoloEnabled ? 'AI enabled' : 'AI disabled'), 'success');
                 } else {
                     showMessage(result.message || 'not available', 'error');
                 }
