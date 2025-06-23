@@ -866,19 +866,25 @@
                         </div>
                         
                         <div class="source-info">
-                            📹 <strong>Supported RTSP Formats:</strong><br>
-                            • <code>rtsp://192.168.1.4:554/live/ch00_0</code> (No auth)<br>
-                            • <code>rtsp://admin:@192.168.1.4:554/live/ch00_0</code> (User only)<br>
-                            • <code>rtsp://admin:admin@192.168.1.4:554/live/ch00_0</code> (Full auth)<br>
-                            • <code>rtsp://user:pass@ip:port/path</code> (Generic)<br>
-                            • Auto-detects credentials from URL<br>
-                            • Fallback to separate username/password fields
+                            📹 <strong>Supported RTSP Formats</strong><br>
+                            • <code>rtsp://192.168.1.4:554/live/ch00_0</code><br>
+                            • <code>rtsp://admin:@192.168.1.4/stream</code>4<br>
+                            • <code>rtsp://admin:admin@192.168.1.4:554/</code><br>
+                            • <code>rtsp://user:pass@192.168.1.4/path/stream</code><br>
+                            • <code>http://192.168.1.4/any/path</code><br>
+                            • <code>https://admin:pass@192.168.1.4:8080/</code><br>
+                            • 🔍 <strong>Smart IP Detection</strong> - Extracts IP from ANY URL format<br>
+                            • 🔄 <strong>Real-time IP extraction</strong> - Camera IP auto-fills as you type<br>
+                            • ✅ <strong>IP Validation</strong> - Only valid IP addresses (0-255 range)
                         </div>
                         
                         <div class="tips">
-                            💡 <strong>Smart RTSP Parsing:</strong> System auto-detects credentials in URL<br>
-                            🔓 URL without auth → 👤 User in URL → 🔐 Full auth in URL<br>
-                            ⚡ <strong>Auto IP extraction</strong> for ONVIF PTZ control
+                            💡 <strong>Universal IP Detection:</strong> System extracts IP from any URL format<br>
+                            🔓 Works with: rtsp://, http://, https://, or even plain IP URLs<br>
+                            👤 Handles: No auth, username only, full credentials, custom ports<br>
+                            ⚡ <strong>Real-time validation:</strong> Only valid IP addresses are accepted<br>
+                            🔄 <strong>Universal support:</strong> Camera IP field updates from ANY URL format<br>
+                            🎯 <strong>Examples:</strong> 192.168.1.4, 10.0.0.100, 172.16.0.50 all work perfectly
                         </div>
                     </div>
 
@@ -1349,7 +1355,7 @@
             }
         }
 
-        // Enhanced RTSP URL parsing
+        // Enhanced RTSP URL parsing with robust IP address extraction
         function parseRtspUrl() {
             const rtspUrlInput = document.getElementById('rtspUrl');
             const cameraIpInput = document.getElementById('cameraIp');
@@ -1361,6 +1367,25 @@
             // Hide error message when user types new URL
             hideRtspError();
             
+            // If URL is empty, clear the Camera IP field
+            if (!url) {
+                cameraIpInput.value = '';
+                return;
+            }
+            
+            // Extract IP address from any RTSP URL format
+            const extractedIP = extractIPFromRtspUrl(url);
+            
+            if (extractedIP) {
+                cameraIpInput.value = extractedIP;
+                console.log(`🔍 IP Detected: ${extractedIP} from URL: ${url}`);
+            } else {
+                // If no valid IP found, clear the field
+                cameraIpInput.value = '';
+                console.log(`❌ No valid IP detected in URL: ${url}`);
+            }
+            
+            // Continue with credential extraction only if it's a valid RTSP URL
             if (!url.startsWith('rtsp://')) {
                 return;
             }
@@ -1372,11 +1397,6 @@
                 
                 if (match) {
                     const [, user, pass, host, port, path] = match;
-                    
-                    // Auto-extract IP untuk ONVIF jika belum diisi
-                    if (host && !cameraIpInput.value.trim()) {
-                        cameraIpInput.value = host;
-                    }
                     
                     // Show extracted credentials info
                     const credentialsSection = document.getElementById('rtspCredentialsSection');
@@ -1412,11 +1432,71 @@
             }
         }
 
-        // Setup RTSP URL input handler
+        // Enhanced IP extraction function that works with any URL format
+        function extractIPFromRtspUrl(url) {
+            // Remove protocol if present
+            let cleanUrl = url.replace(/^[a-zA-Z]+:\/\//, '');
+            
+            // Remove credentials if present (everything before @)
+            if (cleanUrl.includes('@')) {
+                cleanUrl = cleanUrl.split('@')[1];
+            }
+            
+            // Remove path if present (everything after first /)
+            if (cleanUrl.includes('/')) {
+                cleanUrl = cleanUrl.split('/')[0];
+            }
+            
+            // Remove port if present (everything after :)
+            if (cleanUrl.includes(':')) {
+                cleanUrl = cleanUrl.split(':')[0];
+            }
+            
+            // Validate if it's a valid IP address
+            if (isValidIPAddress(cleanUrl)) {
+                return cleanUrl;
+            }
+            
+            // If not a valid IP, try to extract IP from hostname or any other format
+            const ipPattern = /(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/;
+            const ipMatch = url.match(ipPattern);
+            
+            if (ipMatch && isValidIPAddress(ipMatch[1])) {
+                return ipMatch[1];
+            }
+            
+            return null;
+        }
+
+        // Validate IP address format
+        function isValidIPAddress(ip) {
+            const ipPattern = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
+            const match = ip.match(ipPattern);
+            
+            if (!match) return false;
+            
+            // Check if each octet is between 0-255
+            for (let i = 1; i <= 4; i++) {
+                const octet = parseInt(match[i], 10);
+                if (octet < 0 || octet > 255) {
+                    return false;
+                }
+            }
+            
+            return true;
+        }
+
+        // Setup RTSP URL input handler with real-time IP extraction
         function setupRtspUrlHandler() {
             const rtspUrlInput = document.getElementById('rtspUrl');
             if (rtspUrlInput) {
+                // Real-time parsing on every keystroke
                 rtspUrlInput.addEventListener('input', parseRtspUrl);
+                rtspUrlInput.addEventListener('keyup', parseRtspUrl);
+                rtspUrlInput.addEventListener('paste', function() {
+                    // Delay parsing untuk paste event
+                    setTimeout(parseRtspUrl, 100);
+                });
                 rtspUrlInput.addEventListener('blur', parseRtspUrl);
             }
         }
@@ -2458,13 +2538,14 @@
             console.log('📁 File Timing Support Initialized');
             console.log('🔲 Detection Overlay Toggle Initialized');
             console.log('🤖 Universal .pt Model Support Initialized');
-            console.log('📹 Enhanced RTSP URL Support Initialized');
+            console.log('📹 Enhanced RTSP URL Support Initialized with Real-time IP Extraction');
             console.log('📺 Supported: YouTube Live, Twitch, HLS, Facebook Live, Instagram Live');
             console.log('⚡ Original timing preservation enabled for all sources');
             console.log('🎯 Fixed file playback speed issues');
             console.log('👁️ Detection boxes can now be hidden while keeping tracking active');
             console.log('📦 AI Models: Official YOLO + Custom .pt files with smart detection');
             console.log('🚨 RTSP connection error notifications enabled');
+            console.log('🔄 Real-time Camera IP sync enabled - auto-fills as you type RTSP URL');
         });
 
         // Enhanced error handling for video feed
