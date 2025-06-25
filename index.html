@@ -711,6 +711,54 @@
             animation: errorPulse 2s ease-in-out infinite !important;
         }
 
+        /* OBS Stream URL styles */
+        .code-block {
+            font-family: monospace;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            margin-top: 5px;
+            word-break: break-all;
+            color: #4CAF50;
+        }
+        
+        .copy-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 2px 8px;
+            font-size: 10px;
+            cursor: pointer;
+            margin-left: 5px;
+        }
+        
+        .copy-btn:hover {
+            background: #45a049;
+        }
+        
+        /* OBS Connection Panel */
+        .obs-panel {
+            background: rgba(76, 175, 80, 0.1);
+            border: 1px solid rgba(76, 175, 80, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            display: none;
+        }
+        
+        .obs-panel h4 {
+            color: #4CAF50;
+            margin-bottom: 10px;
+        }
+        
+        .obs-instructions {
+            font-size: 12px;
+            margin-top: 10px;
+            color: #ccc;
+        }
+
         @keyframes errorPulse {
             0% { opacity: 1; }
             50% { opacity: 0.7; }
@@ -1047,6 +1095,31 @@
                     <div id="connectionMessage"></div>
                 </div>
 
+                <!-- OBS Streaming Panel -->
+                <div id="obsPanel" class="obs-panel">
+                    <h4>📺 OBS Studio Integration</h4>
+                    <div class="form-group">
+                        <label>CCTV Stream URL for OBS:</label>
+                        <div id="obsMainUrl" class="code-block"></div>
+                        <button class="btn btn-primary" style="margin-top: 8px;" onclick="copyObsMainUrl()">
+                            📋 Copy URL for OBS
+                        </button>
+                    </div>
+                    
+                    <div class="obs-instructions">
+                        <p><strong>How to add this stream to OBS Studio:</strong></p>
+                        <ol style="padding-left: 20px; margin-top: 5px;">
+                            <li>Open OBS Studio</li>
+                            <li>Click + in Sources panel → Media Source</li>
+                            <li>Create new source → give it a name</li>
+                            <li>Paste URL into "Input" field</li>
+                            <li>Check "Network Buffering" option</li>
+                            <li>Uncheck "Local File" option</li>
+                            <li>Click OK to add the source</li>
+                        </ol>
+                    </div>
+                </div>
+
                 <!-- Performance Controls -->
                 <div class="control-section">
                     <h3>⚡ Performance Settings</h3>
@@ -1213,6 +1286,11 @@
                         <div class="status-item full-width">
                             <div>🌐 ONVIF: <span id="onvifStatus">Not connected</span></div>
                         </div>
+                        <!-- OBS Streaming Info -->
+                        <div id="obsInfoContainer" class="status-item full-width" style="display: none;">
+                            <div>📺 OBS Stream URL: <button id="copyObsUrlBtn" class="copy-btn" onclick="copyObsUrl()">Copy</button></div>
+                            <div id="obsStreamUrl" class="code-block"></div>
+                        </div>
                     </div>
                 </div>
 
@@ -1259,6 +1337,7 @@
         let currentSourceType = 'rtsp';
         let selectedWebcamIndex = -1;
         let availableWebcams = [];
+        let obsStreamUrl = ''; // Store the OBS stream URL
 
         // Performance settings
         let targetFPS = 25;
@@ -1272,6 +1351,67 @@
         let preserveTiming = true;
         let originalFps = null;
         let isFileWithTiming = false;
+
+        // OBS integration functions
+        function showObsInfo() {
+            const obsInfoContainer = document.getElementById('obsInfoContainer');
+            const obsStreamUrlElement = document.getElementById('obsStreamUrl');
+            const obsPanel = document.getElementById('obsPanel');
+            const obsMainUrl = document.getElementById('obsMainUrl');
+            
+            // Generate the OBS stream URL based on current server
+            const serverOrigin = window.location.origin;
+            obsStreamUrl = `${serverOrigin}/video_feed`;
+            
+            // Display the URL in the status section
+            if (obsStreamUrlElement) {
+                obsStreamUrlElement.textContent = obsStreamUrl;
+                obsInfoContainer.style.display = 'block';
+            }
+            
+            // Display the URL in the main OBS panel
+            if (obsMainUrl) {
+                obsMainUrl.textContent = obsStreamUrl;
+                obsPanel.style.display = 'block';
+            }
+            
+            showMessage('✅ OBS Stream URL ready - click Copy to use in OBS Studio', 'success');
+        }
+        
+        function hideObsInfo() {
+            const obsInfoContainer = document.getElementById('obsInfoContainer');
+            const obsPanel = document.getElementById('obsPanel');
+            
+            if (obsInfoContainer) {
+                obsInfoContainer.style.display = 'none';
+            }
+            
+            if (obsPanel) {
+                obsPanel.style.display = 'none';
+            }
+        }
+        
+        function copyObsUrl() {
+            navigator.clipboard.writeText(obsStreamUrl)
+                .then(() => {
+                    showMessage('OBS Stream URL copied to clipboard!', 'success');
+                })
+                .catch(err => {
+                    console.error('Could not copy text: ', err);
+                    showMessage('Failed to copy URL', 'error');
+                });
+        }
+        
+        function copyObsMainUrl() {
+            navigator.clipboard.writeText(obsStreamUrl)
+                .then(() => {
+                    showMessage('OBS Stream URL copied to clipboard!', 'success');
+                })
+                .catch(err => {
+                    console.error('Could not copy text: ', err);
+                    showMessage('Failed to copy URL', 'error');
+                });
+        }
 
         // RTSP error message management
         function showRtspError(message) {
@@ -1905,11 +2045,11 @@
                     
                     startVideoStream();
                     
-                    connectBtn.style.display = 'none';
-                    disconnectBtn.style.display = 'block';
-                    
                     startStatusUpdates();
                     updatePerformanceSettings();
+                    
+                    // Show OBS streaming information
+                    showObsInfo();
                     
                     // Enhanced source indicator
                     document.getElementById('currentSource').textContent = result.source_type || currentSourceType;
@@ -1927,6 +2067,9 @@
                         document.getElementById('sourceFps').textContent = originalFps.toFixed(1);
                         document.getElementById('fileOriginalFps').textContent = originalFps.toFixed(1);
                     }
+                    
+                    connectBtn.style.display = 'none';
+                    disconnectBtn.style.display = 'block';
                 } else {
                     showMessage('Connection failed: ' + result.message, 'error');
                     
@@ -2456,6 +2599,7 @@
             updateDetectionOverlayStatus(); // Reset overlay status
             showLiveStreamUI(false);
             showFileTimingUI(false);
+            hideObsInfo(); // Hide OBS information
             
             const videoFeed = document.getElementById('videoFeed');
             const noVideo = document.getElementById('noVideo');
@@ -2546,6 +2690,7 @@
             console.log('📦 AI Models: Official YOLO + Custom .pt files with smart detection');
             console.log('🚨 RTSP connection error notifications enabled');
             console.log('🔄 Real-time Camera IP sync enabled - auto-fills as you type RTSP URL');
+            console.log('📺 OBS Studio Integration Initialized');
         });
 
         // Enhanced error handling for video feed
