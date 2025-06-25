@@ -1222,41 +1222,6 @@ docker run --gpus all -p 4000:4000 -v ./models:/app/models multisource-cctv
 3. ✅ Try with a minimal configuration
 4. ✅ Test with different video sources
 
-### 📋 Bug Reports
-
-**Create detailed bug reports with:**
-- **System Info**: OS, Python version, GPU details
-- **Installation Method**: Windows installer, Linux script, manual, Docker
-- **Error Messages**: Complete error text and log files
-- **Steps to Reproduce**: Exact sequence to trigger the issue
-- **Expected vs Actual**: What should happen vs what actually happens
-
-### ✨ Feature Requests
-
-**Suggest new features with:**
-- **Problem Description**: What problem does this solve?
-- **Proposed Solution**: How should it work?
-- **Use Cases**: Who would benefit?
-- **Examples**: Similar features in other software
-
-### 💬 Community Resources
-
-- **GitHub Discussions**: Q&A, ideas, and general discussion
-- **GitHub Issues**: Bug reports and feature requests
-- **Community Wiki**: User-contributed guides and tips
-- **Video Tutorials**: Setup and configuration guides
-
-### 🏢 Professional Support
-
-For organizations requiring professional assistance:
-- **Installation Services**: Professional setup and configuration
-- **Custom Development**: Feature development and customization
-- **Training & Documentation**: Staff training and custom documentation
-- **Performance Optimization**: System tuning and optimization
-- **Security Auditing**: Security assessment and hardening
-
-## 🎖️ Acknowledgments
-
 ### Core Technologies
 - **[Ultralytics](https://ultralytics.com/)**: Revolutionary YOLO implementation and pre-trained models
 - **[OpenCV](https://opencv.org/)**: Comprehensive computer vision library for video processing
