@@ -176,6 +176,7 @@
             border-radius: 8px;
             padding: 16px;
             border: 1px solid #2a4a6b;
+            transition: opacity 0.3s ease, transform 0.3s ease;
         }
 
         .control-section h3 {
@@ -185,6 +186,71 @@
             display: flex;
             align-items: center;
             gap: 8px;
+        }
+
+        /* Source-specific section styling */
+        .control-section[style*="display: none"] {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+
+        /* Enhanced RTSP-specific styling */
+        #ptzControlSection {
+            border-color: #4CAF50;
+            background: rgba(76, 175, 80, 0.05);
+        }
+
+        #ptzControlSection h3 {
+            color: #4CAF50;
+        }
+
+        /* PTZ section enhanced styling */
+        #ptzControlSection .tracking-toggle {
+            background: rgba(76, 175, 80, 0.1);
+            border: 1px solid rgba(76, 175, 80, 0.3);
+        }
+
+        #ptzControlSection .status-grid {
+            background: rgba(76, 175, 80, 0.05);
+            border: 1px solid rgba(76, 175, 80, 0.2);
+            border-radius: 8px;
+            padding: 12px;
+        }
+
+        /* Source type indicator enhancement */
+        .source-type-indicator {
+            background: rgba(76, 175, 80, 0.1);
+            border: 1px solid #4CAF50;
+            color: #4CAF50;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            margin-bottom: 12px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .source-type-indicator.rtsp-active {
+            background: rgba(76, 175, 80, 0.2);
+            border-color: #66BB6A;
+        }
+
+        .source-type-indicator.webcam-active {
+            background: rgba(33, 150, 243, 0.1);
+            border-color: #2196F3;
+            color: #2196F3;
+        }
+
+        .source-type-indicator.stream-active {
+            background: rgba(255, 68, 68, 0.1);
+            border-color: #ff4444;
+            color: #ff4444;
+        }
+
+        .source-type-indicator.file-active {
+            background: rgba(135, 206, 235, 0.1);
+            border-color: #87CEEB;
+            color: #87CEEB;
         }
 
         .source-type-selector {
@@ -635,17 +701,6 @@
             background: #87CEEB;
         }
 
-        .source-type-indicator {
-            background: rgba(76, 175, 80, 0.1);
-            border: 1px solid #4CAF50;
-            color: #4CAF50;
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-size: 11px;
-            margin-bottom: 12px;
-            text-align: center;
-        }
-
         /* Live Stream Indicator */
         .live-indicator {
             background: #ff4444;
@@ -870,7 +925,7 @@
                         </div>
                     </div>
 
-                    <div id="currentSourceIndicator" class="source-type-indicator">
+                    <div id="currentSourceIndicator" class="source-type-indicator rtsp-active">
                         Current: RTSP/IP Camera with Enhanced URL Support
                     </div>
 
@@ -1261,6 +1316,32 @@
                         <span id="connectionText">Disconnected</span>
                     </div>
                     
+                    <div class="status-grid">
+                        <div class="status-item">
+                            <div>📡 Stream</div>
+                            <div id="streamingStatus">❌</div>
+                        </div>
+                        <div class="status-item">
+                            <div>🤖 AI</div>
+                            <div id="aiStatus">❌</div>
+                        </div>
+                        <!-- Source Type Status - Always visible -->
+                        <div class="status-item full-width" id="sourceTypeContainer">
+                            <div>📹 Source: <span id="sourceTypeStatus">None</span></div>
+                        </div>
+                        <!-- OBS Streaming Info -->
+                        <div id="obsInfoContainer" class="status-item full-width" style="display: none;">
+                            <div>📺 OBS Stream URL: <button id="copyObsUrlBtn" class="copy-btn" onclick="copyObsUrl()">Copy</button></div>
+                            <div id="obsStreamUrl" class="code-block"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PTZ Controls - Only for RTSP sources -->
+                <div class="control-section" id="ptzControlSection" style="display: none;">
+                    <h3>🕹️ PTZ Control (RTSP/ONVIF Only)</h3>
+                    
+                    <!-- Auto Tracking Toggle - Only for RTSP with PTZ -->
                     <div class="tracking-toggle">
                         <span>🎯 Auto Tracking:</span>
                         <div class="toggle-switch" id="trackingToggle" onclick="toggleTracking()">
@@ -1274,29 +1355,22 @@
                                oninput="updateTrackingSensitivity(this.value)">
                     </div>
                     
-                    <div class="status-grid">
-                        <div class="status-item">
-                            <div>📡 Stream</div>
-                            <div id="streamingStatus">❌</div>
-                        </div>
+                    <!-- PTZ Status Grid -->
+                    <div class="status-grid" style="margin-bottom: 16px;">
                         <div class="status-item">
                             <div>🕹️ PTZ</div>
                             <div id="ptzStatus">❌</div>
                         </div>
-                        <div class="status-item full-width">
+                        <div class="status-item">
+                            <div>🎯 Track</div>
+                            <div id="trackingStatus">OFF</div>
+                        </div>
+                        <!-- ONVIF Status - Only for RTSP sources -->
+                        <div class="status-item full-width" id="onvifStatusContainer">
                             <div>🌐 ONVIF: <span id="onvifStatus">Not connected</span></div>
                         </div>
-                        <!-- OBS Streaming Info -->
-                        <div id="obsInfoContainer" class="status-item full-width" style="display: none;">
-                            <div>📺 OBS Stream URL: <button id="copyObsUrlBtn" class="copy-btn" onclick="copyObsUrl()">Copy</button></div>
-                            <div id="obsStreamUrl" class="code-block"></div>
-                        </div>
                     </div>
-                </div>
-
-                <!-- PTZ Controls -->
-                <div class="control-section">
-                    <h3>🕹️ PTZ Control</h3>
+                    
                     <div class="ptz-controls">
                         <div></div>
                         <div class="ptz-btn disabled" onclick="movePTZ(0, 0.5, 0)">⬆️</div>
@@ -1319,12 +1393,67 @@
                         <input type="range" id="ptzSpeedSlider" min="0.1" max="2.0" step="0.1" value="1.0" 
                                oninput="updatePTZSpeed(this.value)">
                     </div>
+                    
+                    <div class="source-info" style="margin-top: 12px;">
+                        🕹️ <strong>PTZ Control Features:</strong><br>
+                        • Pan, Tilt, Zoom, and Home position control<br>
+                        • Auto person tracking with YOLO/Motion detection<br>
+                        • Adjustable tracking sensitivity<br>
+                        • Variable PTZ movement speed<br>
+                        • Requires RTSP camera with ONVIF support<br>
+                        • Auto-discovered during RTSP connection
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
+        /*
+        ===== TAB-SPECIFIC FEATURES IMPLEMENTATION =====
+        
+        🎥 RTSP/IP TAB:
+        - RTSP URL templates (Hikvision, Dahua, Axis, etc.)
+        - Enhanced URL parsing with credential extraction
+        - Camera IP auto-detection for ONVIF
+        - RTSP error notifications
+        - PTZ Controls (only visible for RTSP)
+        - Auto Tracking (only for PTZ-enabled RTSP cameras)
+        - ONVIF status display (only for RTSP)
+        - PTZ movement controls and speed adjustment
+        
+        📹 WEBCAM TAB:
+        - Auto webcam detection and listing
+        - Device information display
+        - Refresh webcam list functionality
+        - No PTZ, ONVIF, or Auto Tracking features
+        
+        📺 LIVE STREAM TAB:
+        - Stream URL templates (YouTube, Twitch, HLS, etc.)
+        - Live stream timing preservation settings
+        - Buffer size optimization for live streams
+        - Connection timeout settings
+        - Live stream indicators and status
+        - No PTZ or Auto Tracking features
+        
+        📁 FILE/URL TAB:
+        - File path/URL input
+        - Auto-detection of file vs live stream URLs
+        - Original timing preservation controls
+        - File looping options
+        - Buffer size settings for files
+        - File timing indicators
+        - No PTZ or Auto Tracking features
+        
+        🌐 UNIVERSAL FEATURES (All Tabs):
+        - AI Detection controls (YOLO/Motion)
+        - Detection overlay toggle (show/hide boxes)
+        - Performance settings (FPS, Quality)
+        - OBS streaming integration
+        - Video display controls (fullscreen, fit modes)
+        - System status monitoring
+        */
+        
         // Enhanced multi-source CCTV system with fixed file timing preservation
         let isConnected = false;
         let trackingEnabled = false;
@@ -1670,7 +1799,7 @@
             }
         }
 
-        // Source type management
+        // Source type management with feature visibility control
         function selectSourceType(type) {
             currentSourceType = type;
             
@@ -1694,9 +1823,69 @@
             
             document.getElementById('currentSourceIndicator').textContent = `Current: ${indicators[type]}`;
             
+            // Show/Hide source-specific features
+            updateFeatureVisibility(type);
+            
             // Refresh webcams if webcam selected
             if (type === 'webcam') {
                 refreshWebcams();
+            }
+        }
+
+        // NEW: Function to control feature visibility based on source type
+        function updateFeatureVisibility(sourceType) {
+            const ptzSection = document.getElementById('ptzControlSection');
+            const obsPanel = document.getElementById('obsPanel');
+            const sourceIndicator = document.getElementById('currentSourceIndicator');
+            
+            // PTZ Controls - Only show for RTSP
+            if (sourceType === 'rtsp') {
+                ptzSection.style.display = 'block';
+            } else {
+                ptzSection.style.display = 'none';
+            }
+            
+            // Hide OBS panel when changing source types (will be shown on successful connection)
+            if (obsPanel) {
+                obsPanel.style.display = 'none';
+            }
+            
+            // Update source indicator styling
+            if (sourceIndicator) {
+                // Remove all source-specific classes
+                sourceIndicator.classList.remove('rtsp-active', 'webcam-active', 'stream-active', 'file-active');
+                // Add appropriate class for current source
+                sourceIndicator.classList.add(`${sourceType}-active`);
+            }
+            
+            // Update UI elements based on source capabilities
+            updateSourceSpecificUI(sourceType);
+        }
+
+        // NEW: Update UI elements based on source capabilities
+        function updateSourceSpecificUI(sourceType) {
+            // Update status items visibility
+            const liveStatus = document.querySelectorAll('.live-status');
+            const fileStatus = document.querySelectorAll('.file-status');
+            
+            // Reset all status items to hidden initially
+            liveStatus.forEach(status => status.style.display = 'none');
+            fileStatus.forEach(status => status.style.display = 'none');
+            
+            // Reset indicators
+            showLiveStreamUI(false);
+            showFileTimingUI(false);
+            
+            // Clear any source-specific indicators
+            const liveIndicator = document.getElementById('liveIndicator');
+            const fileIndicator = document.getElementById('fileIndicator');
+            if (liveIndicator) liveIndicator.style.display = 'none';
+            if (fileIndicator) fileIndicator.style.display = 'none';
+            
+            // Reset tracking for non-RTSP sources
+            if (sourceType !== 'rtsp' && trackingEnabled) {
+                trackingEnabled = false;
+                updateTrackingStatus();
             }
         }
 
@@ -1895,6 +2084,36 @@
             }
         }
 
+        // NEW: Update features based on successfully connected source
+        function updateConnectedSourceFeatures(sourceType, isLive, isFileWithTiming) {
+            // Show appropriate timing UI
+            if (isLive) {
+                showLiveStreamUI(true);
+                showFileTimingUI(false);
+            } else if (isFileWithTiming) {
+                showLiveStreamUI(false);
+                showFileTimingUI(true);
+            } else {
+                showLiveStreamUI(false);
+                showFileTimingUI(false);
+            }
+            
+            // Show/hide PTZ controls based on source type
+            const ptzSection = document.getElementById('ptzControlSection');
+            if (sourceType === 'rtsp') {
+                ptzSection.style.display = 'block';
+                // PTZ buttons will be enabled/disabled based on ONVIF availability in status updates
+                // Tracking can be enabled for RTSP sources
+            } else {
+                ptzSection.style.display = 'none';
+                // Disable tracking for non-RTSP sources
+                if (trackingEnabled) {
+                    trackingEnabled = false;
+                    updateTrackingStatus();
+                }
+            }
+        }
+
         // Enhanced connection function dengan file timing preservation
         async function connectSource() {
             const connectBtn = document.getElementById('connectBtn');
@@ -2031,24 +2250,15 @@
                     originalFps = result.original_fps || null;
                     isFileWithTiming = (currentSourceType === 'file' && preserveTiming && !isLiveStream);
                     
-                    // Show appropriate UI
-                    if (isLiveStream) {
-                        showLiveStreamUI(true);
-                        showFileTimingUI(false);
-                    } else if (isFileWithTiming) {
-                        showLiveStreamUI(false);
-                        showFileTimingUI(true);
-                    } else {
-                        showLiveStreamUI(false);
-                        showFileTimingUI(false);
-                    }
+                    // Show appropriate UI based on connected source type
+                    updateConnectedSourceFeatures(currentSourceType, isLiveStream, isFileWithTiming);
                     
                     startVideoStream();
                     
                     startStatusUpdates();
                     updatePerformanceSettings();
                     
-                    // Show OBS streaming information
+                    // Show OBS streaming information for all sources
                     showObsInfo();
                     
                     // Enhanced source indicator
@@ -2351,10 +2561,14 @@
 
         function updateTrackingStatus() {
             const toggle = document.getElementById('trackingToggle');
+            const trackingStatus = document.getElementById('trackingStatus');
+            
             if (trackingEnabled) {
                 toggle.classList.add('active');
+                if (trackingStatus) trackingStatus.textContent = 'ON';
             } else {
                 toggle.classList.remove('active');
+                if (trackingStatus) trackingStatus.textContent = 'OFF';
             }
         }
 
@@ -2436,9 +2650,28 @@
                 
                 // Update status displays
                 document.getElementById('streamingStatus').textContent = status.streaming ? '✅' : '❌';
-                document.getElementById('ptzStatus').textContent = ptzAvailable ? '✅' : '❌';
+                document.getElementById('aiStatus').textContent = (yoloEnabled || trackingEnabled) ? '✅' : '❌';
+                
+                // PTZ Status - Only update if PTZ section is visible (RTSP source)
+                const ptzSection = document.getElementById('ptzControlSection');
+                if (ptzSection && ptzSection.style.display !== 'none') {
+                    document.getElementById('ptzStatus').textContent = ptzAvailable ? '✅' : '❌';
+                    document.getElementById('onvifStatus').textContent = status.onvif_status || 'Not available';
+                }
+                
+                // Update source type status
+                const sourceTypeStatus = document.getElementById('sourceTypeStatus');
+                if (sourceTypeStatus) {
+                    let sourceText = status.source_type || 'None';
+                    if (status.source_type === 'rtsp') sourceText = 'RTSP/IP Camera';
+                    else if (status.source_type === 'webcam') sourceText = 'USB Webcam';
+                    else if (status.source_type === 'stream') sourceText = 'Live Stream';
+                    else if (status.source_type === 'file') sourceText = 'Video File';
+                    
+                    sourceTypeStatus.textContent = sourceText;
+                }
+                
                 document.getElementById('personCount').textContent = status.person_count || 0;
-                document.getElementById('onvifStatus').textContent = status.onvif_status || 'Not available';
                 
                 // Update detection status
                 const detectionStatus = document.getElementById('detectionStatus');
@@ -2594,12 +2827,18 @@
             isConnected = false;
             isLiveStream = false;
             isFileWithTiming = false;
+            trackingEnabled = false; // Reset tracking
             showDetectionOverlay = true; // Reset to default
             updateConnectionStatus(false);
             updateDetectionOverlayStatus(); // Reset overlay status
+            updateTrackingStatus(); // Reset tracking status
             showLiveStreamUI(false);
             showFileTimingUI(false);
             hideObsInfo(); // Hide OBS information
+            
+            // Hide all source-specific features
+            const ptzSection = document.getElementById('ptzControlSection');
+            if (ptzSection) ptzSection.style.display = 'none';
             
             const videoFeed = document.getElementById('videoFeed');
             const noVideo = document.getElementById('noVideo');
@@ -2643,6 +2882,12 @@
             // Set initial detection overlay status
             updateDetectionOverlayStatus();
             
+            // Set initial tracking status
+            updateTrackingStatus();
+            
+            // Initialize feature visibility for default source type (RTSP)
+            updateFeatureVisibility('rtsp');
+            
             // Setup enhanced file URL handling
             setupFileUrlHandler();
             
@@ -2676,21 +2921,16 @@
             
             startStatusUpdates();
             
-            console.log('🚀 Multi-Source CCTV System Initialized');
-            console.log('📡 Supported sources: RTSP/IP (Enhanced), Webcam, Live Streams, Files');
-            console.log('🔴 Live Stream Support Initialized');
-            console.log('📁 File Timing Support Initialized');
-            console.log('🔲 Detection Overlay Toggle Initialized');
-            console.log('🤖 Universal .pt Model Support Initialized');
-            console.log('📹 Enhanced RTSP URL Support Initialized with Real-time IP Extraction');
-            console.log('📺 Supported: YouTube Live, Twitch, HLS, Facebook Live, Instagram Live');
-            console.log('⚡ Original timing preservation enabled for all sources');
-            console.log('🎯 Fixed file playback speed issues');
-            console.log('👁️ Detection boxes can now be hidden while keeping tracking active');
-            console.log('📦 AI Models: Official YOLO + Custom .pt files with smart detection');
-            console.log('🚨 RTSP connection error notifications enabled');
-            console.log('🔄 Real-time Camera IP sync enabled - auto-fills as you type RTSP URL');
-            console.log('📺 OBS Studio Integration Initialized');
+            console.log('🚀 Multi-Source CCTV System Initialized with Tab-Specific Features');
+            console.log('📡 Feature Visibility: Source-specific controls enabled');
+            console.log('🕹️ PTZ Controls: Only visible for RTSP sources');
+            console.log('🎯 Auto Tracking: Only available with PTZ (RTSP sources)');
+            console.log('📺 Live Stream Features: Only for live stream sources');
+            console.log('📁 File Features: Only for file sources');
+            console.log('🌐 ONVIF Status: Only for RTSP sources');
+            console.log('📺 OBS Integration: Available for all connected sources');
+            console.log('🔲 Detection Overlay Toggle: Universal feature');
+            console.log('🤖 AI Detection: Universal feature with source-aware optimization');
         });
 
         // Enhanced error handling for video feed
