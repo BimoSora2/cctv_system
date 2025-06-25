@@ -134,7 +134,7 @@ A comprehensive, real-time video surveillance system that supports multiple vide
 #### Automated Installation Script
 ```bash
 # Download and run automated installer
-wget https://raw.githubusercontent.com/your-repo/multi-source-cctv/main/install.sh
+wget https://github.com/BimoSora2/cctv_system/blob/main/install.sh
 chmod +x install.sh
 ./install.sh
 
